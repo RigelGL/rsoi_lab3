@@ -152,7 +152,7 @@ jobs:
         working-directory: gateway
   
   build:
-#    needs: [ persons_test, payment_test, loyalty_test, reservation_test, gateway_test ]
+    needs: [ persons_test, payment_test, loyalty_test, reservation_test, gateway_test ]
     name: Autograding
     runs-on: ubuntu-latest
     steps:
@@ -187,7 +187,7 @@ jobs:
         timeout-minutes: 5
         run: ./scripts/test-script.sh
         env:
-          VARIANT: 2
+          VARIANT: v2
           SERVICE_NAME: loyalty
           PORT_NUMBER: 8050
 
