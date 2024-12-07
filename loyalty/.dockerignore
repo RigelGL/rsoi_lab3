@@ -1,0 +1,7 @@
+.idea
+target
+docker-compose.yaml
+Dockerfile
+test.Dockerfile
+test.http
+.env

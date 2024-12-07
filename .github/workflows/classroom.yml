@@ -6,8 +6,153 @@ on:
   pull_request:
     branches:
       - master
+
 jobs:
+  persons_test:
+    name: Persons test
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.23.1-alpine
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: go mod tidy
+        working-directory: person
+      - run: go build -o main .
+        working-directory: person
+
+      - run: go test
+        working-directory: person
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: postgres:5432
+
+  payment_test:
+    name: Payment test
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12.7-alpine3.20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: pip install -r requirements.txt
+        working-directory: payment
+
+      - run: python -m unittest test.py
+        working-directory: payment
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: postgres
+
+  loyalty_test:
+    name: Loyalty test
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.8.8-eclipse-temurin-21-alpine
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: mvn dependency:go-offline
+        working-directory: loyalty
+      - run: mvn test
+        working-directory: loyalty
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: postgres:5432
+
+  reservation_test:
+    name: Reservation test
+    runs-on: ubuntu-latest
+    container:
+      image: node:lts-alpine3.19
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: npm i
+        working-directory: reservation
+      - run: npm run test
+        working-directory: reservation
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: postgres
+
+  gateway_test:
+    name: Gateway test
+    runs-on: ubuntu-latest
+    container:
+      image: node:lts-alpine3.19
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: npm i
+        working-directory: gateway
+      - run: npm run test
+        working-directory: gateway
+  
   build:
+    needs: [ persons_test, payment_test, loyalty_test, reservation_test, gateway_test ]
     name: Autograding
     runs-on: ubuntu-latest
     steps:
@@ -31,15 +176,14 @@ jobs:
         env:
           WAIT_PORTS: 8080,8070,8060,8050
 
-      # TODO setup variant, service and port
 
       - name: Run API Tests
         timeout-minutes: 5
         run: ./scripts/test-script.sh
         env:
-          VARIANT: <variant>
-          SERVICE_NAME: <your service name>
-          PORT_NUMBER: <port number>
+          VARIANT: 2
+          SERVICE_NAME: loyalty
+          PORT_NUMBER: 8050
 
       - uses: education/autograding@v1
         id: autograder

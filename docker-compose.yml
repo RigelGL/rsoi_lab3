@@ -1,20 +1,129 @@
-version: "3"
+networks:
+  backend:
+
+volumes:
+  rsoi-pg:
+
 services:
   postgres:
-    image: library/postgres:13
+    image: postgres:16
     container_name: postgres
     restart: on-failure
     environment:
+      PGUSER: postgres
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: /usr/bin/pg_isready -U $$POSTGRES_USER
+      interval: 5s
+      timeout: 10s
+      retries: 5
     volumes:
-      - db-data:/var/lib/postgresql/data
       - ./postgres/:/docker-entrypoint-initdb.d/
+      - rsoi-pg:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    networks:
+      - backend
 
-# TODO добавить сервисы
+  gateway:
+    build:
+      context: gateway/
+      dockerfile: Dockerfile
+    container_name: gateway
+    restart: on-failure
+    environment:
+      GATEWAY_PORT: 8080
+      PERSON_URL: http://person:8040
+      LOYALTY_URL: http://loyalty:8050
+      PAYMENT_URL: http://payment:8060
+      RESERVATION_URL: http://reservation:8070
+    depends_on:
+      - person
+      - loyalty
+      - payment
+      - reservation
+    networks:
+      - backend
+    ports:
+      - "8080:8080"
 
-volumes:
-  db-data:
+  person:
+    build:
+      context: person/
+      dockerfile: Dockerfile
+    container_name: person
+    restart: on-failure
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: person
+      APP_PORT: 8040
+    ports:
+      - "8040:8040"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  loyalty:
+    build:
+      context: loyalty/
+      dockerfile: Dockerfile
+    container_name: loyalty
+    restart: on-failure
+    environment:
+      DB_HOST: postgres
+      DB_NAME: loyalty
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      APP_PORT: 8050
+    ports:
+      - "8050:8050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  payment:
+    build:
+      context: payment/
+      dockerfile: Dockerfile
+    container_name: payment
+    restart: on-failure
+    environment:
+      DB_HOST: postgres
+      DB_NAME: payment
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      APP_PORT: 8060
+    ports:
+      - "8060:8060"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  reservation:
+    build:
+      context: reservation/
+      dockerfile: Dockerfile
+    container_name: reservation
+    restart: on-failure
+    environment:
+      DB_HOST: postgres
+      DB_NAME: reservation
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      APP_PORT: 8070
+    ports:
+      - "8070:8070"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend

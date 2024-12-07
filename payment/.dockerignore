@@ -1,0 +1,7 @@
+.idea
+venv
+.venv
+Dockerfile
+test.http
+.dockerignore
+.env
