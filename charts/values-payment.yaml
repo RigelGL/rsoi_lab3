@@ -1,0 +1,8 @@
+name: rsoi_payment
+image: dockerhub.rigellab.ru/rsoi/payment
+port: 8060
+env:
+  DB_HOST: rsoi_postgres
+  DB_NAME: payment
+  DB_USER: payment
+  DB_PASSWORD: postgres

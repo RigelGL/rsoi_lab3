@@ -1,7 +1,8 @@
-.idea
-target
-docker-compose.yaml
+/.mvn
+/target
 Dockerfile
 test.Dockerfile
 test.http
+.dockerignore
 .env
+publish.sh

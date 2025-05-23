@@ -1,0 +1,9 @@
+name: rsoi_gateway
+image: dockerhub.rigellab.ru/rsoi/gateway
+port: 8080
+env:
+  GATEWAY_PORT: 8080
+  PERSON_URL: http://rsoi_person:8040
+  LOYALTY_URL: http://rsoi_loyalty:8050
+  PAYMENT_URL: http://rsoi_payment:8060
+  RESERVATION_URL: http://rsoi_reservation:8070

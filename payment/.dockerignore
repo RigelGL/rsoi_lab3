@@ -1,7 +1,6 @@
-.idea
-venv
-.venv
+/.venv
 Dockerfile
 test.http
 .dockerignore
 .env
+payment.iml

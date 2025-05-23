@@ -1,0 +1,8 @@
+name: rsoi_loyalty
+image: dockerhub.rigellab.ru/rsoi/loyalty
+port: 8050
+env:
+  DB_HOST: rsoi_postgres
+  DB_NAME: loyalty
+  DB_USER: loyalty
+  DB_PASSWORD: postgres

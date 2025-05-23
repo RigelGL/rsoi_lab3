@@ -1,0 +1,8 @@
+name: rsoi_person
+image: dockerhub.rigellab.ru/rsoi/person
+port: 8050
+env:
+  DB_HOST: rsoi_postgres
+  DB_NAME: person
+  DB_USER: person
+  DB_PASSWORD: postgres

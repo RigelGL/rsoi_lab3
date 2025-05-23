@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-app
+    spec:
+      imagePullSecrets:
+        - name: rigellab
+      containers:
+        - name: {{ .Values.name }}-container
+          image: "{{ .Values.image }}:{{ .Values.tag | default "latest" }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.servicePort | default .Values.port }}
+          env:
+            - name: APP_PORT
+              value: {{ .Values.port | quote }}
+            {{- if .Values.env }}
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+          {{- if .Values.pvc }}
+          {{- if .Values.pvc.enabled }}
+          volumeMounts:
+            - mountPath: {{ .Values.pvc.mountPath }}
+              name: {{ .Values.name }}-volume
+            {{- if .Values.dbInit }}
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+            {{- end }}
+          {{- end }}
+          {{- end }}
+      volumes:
+        {{- if .Values.pvc }}
+        {{- if .Values.pvc.enabled }}
+        - name: {{ .Values.name }}-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-pvc
+        {{- end }}
+        {{- end }}
+        {{- if .Values.dbInit }}
+        - name: initdb
+          configMap:
+            name: initdb-config
+        {{- end }}

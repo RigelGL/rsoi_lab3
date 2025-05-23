@@ -1,0 +1,43 @@
+{{- if .Values.dbInit -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: initdb-config
+data:
+  init.sql: |
+    CREATE DATABASE auth;
+    CREATE USER auth WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE auth TO auth;
+
+    CREATE DATABASE person;
+    CREATE USER person WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE person TO person;
+
+    CREATE DATABASE reservation;
+    CREATE USER reservation WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE reservation TO reservation;
+
+    CREATE DATABASE loyalty;
+    CREATE USER loyalty WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE loyalty TO loyalty;
+
+    CREATE DATABASE payment;
+    CREATE USER payment WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE payment TO payment;
+
+    \c auth
+    GRANT ALL PRIVILEGES ON SCHEMA public TO auth;
+
+    \c person
+    GRANT ALL PRIVILEGES ON SCHEMA public TO person;
+
+    \c loyalty
+    GRANT ALL PRIVILEGES ON SCHEMA public TO loyalty;
+
+    \c reservation
+    GRANT ALL PRIVILEGES ON SCHEMA public TO reservation;
+
+    \c payment
+    GRANT ALL PRIVILEGES ON SCHEMA public TO payment;
+    {{- end -}}

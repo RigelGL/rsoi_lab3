@@ -1,0 +1,8 @@
+name: rsoi_reservation
+image: dockerhub.rigellab.ru/rsoi/reservation
+port: 8070
+env:
+  DB_HOST: rsoi_postgres
+  DB_NAME: reservation
+  DB_USER: reservation
+  DB_PASSWORD: postgres
