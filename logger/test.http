@@ -1,0 +1,1 @@
+GET localhost:8020/logs?s={"limit":20}

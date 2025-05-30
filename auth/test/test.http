@@ -1,0 +1,25 @@
+GET 127.0.0.1:8030/supported
+
+###
+POST 127.0.0.1:8030/verify
+Content-Type: application/json
+
+{
+    "token": ""
+}
+
+
+
+###
+GET https://accounts.google.com/o/oauth2/v2/auth?
+    client_id=136192197877-l1lgj3gesqgr2v8nc2rh4a3ksv4eu8ti.apps.googleusercontent.com
+    &redirect_uri=http://localhost:8090
+    &access_type=offline&response_type=code
+    &scope=openid email
+
+###
+GET https://oauth.yandex.ru/authorize?response_type=code&client_id=dd85b97ef1b14276932a312ddc3d3c30&redirect_url=http://localhost:8030/callback&scope=login:email login:info&state=anystate
+
+###
+GET https://login.yandex.ru/info?format=jwt
+Authorization: OAuth y0__xC4w_3BAhiX_jcggIqrohNqX9tcxDxlIXK4hAT4eTWYKnpgjg
