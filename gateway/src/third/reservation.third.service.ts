@@ -15,13 +15,13 @@ export class ReservationThirdService extends Healthy {
         });
     }
 
-    async getHotels(page: number, size: number): Promise<Pagination<HotelInfo>> {
+    async getHotels(page: number, limit: number, search: string): Promise<Pagination<HotelInfo>> {
         try {
             page ||= 1;
-            size ||= 20;
+            limit ||= 20;
 
             const wrapper = await this.runWithProtect(
-                async () => fetch(`${this.url}/hotels?page=${page}&size=${size}`));
+                async () => fetch(`${this.url}/hotels?page=${page}&limit=${limit}&search=${search}`),);
             if (wrapper.failed || wrapper.result?.status !== 200) return null;
 
             const json = await wrapper.result.json();
@@ -29,7 +29,7 @@ export class ReservationThirdService extends Healthy {
             return {
                 items: json.items,
                 totalElements: json.totalElements,
-                pageSize: size,
+                pageSize: limit,
                 page
             }
         } catch (e) {
@@ -57,7 +57,7 @@ export class ReservationThirdService extends Healthy {
         return await wrapper.result.json();
     }
 
-    async getReservations(options: { userName?: string, uid?: string }): Promise<ReservationInfo[]> {
+    async getReservations(options: { userUid?: string, uid?: string }): Promise<ReservationInfo[]> {
         const wrapper = await this.runWithProtect(
             async () => fetch(`${this.url}/reservations?s=${JSON.stringify(options)}`));
         if (wrapper.failed || wrapper.result?.status !== 200) return [];
@@ -65,7 +65,7 @@ export class ReservationThirdService extends Healthy {
     }
 
     async addReservation(reservation: {
-        userName: string,
+        userUid: string,
         hotelUid: string,
         paymentUid: string,
         startDate: string,

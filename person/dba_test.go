@@ -45,7 +45,7 @@ func Test_UpdatePerson(t *testing.T) {
 	var age int32 = 12
 	var work = "NoUpd"
 	var address = "CityUpd"
-	err := GetDba().updatePersonById(personId, &model.PersonRequest{Age: &age, Work: &work, Address: &address})
+	err := GetDba().updatePersonBySub(personId, &model.PersonRequest{Age: &age, Work: &work, Address: &address})
 
 	assert.Equal(t, 0, err.code)
 
@@ -69,7 +69,7 @@ func Test_DeletePerson(t *testing.T) {
 	_, err := GetDba().findPersonById(personId)
 	assert.Equal(t, 0, err.code)
 
-	err = GetDba().deletePersonById(personId)
+	err = GetDba().deletePersonBySub(personId)
 	assert.Equal(t, 0, err.code)
 
 	_, err = GetDba().findPersonById(personId)

@@ -104,27 +104,11 @@ func (s Dba) findPersons(search string) (*model.ArrayResult[model.PersonData], D
 	return model.NewArrayResult[model.PersonData](len(persons), len(persons), persons), DbStatus{code: 0}
 }
 
-func (s Dba) findPersonByName(name string) (*model.PersonData, DbStatus) {
-	var res = &model.PersonData{}
+func (s Dba) findPersonById(id string) (model.PersonData, DbStatus) {
 	row := s.db.QueryRow(
 		`SELECT id, name, age, address, work
 				FROM person
-				WHERE name = $1
-				ORDER BY id`, name)
-
-	err := row.Scan(&res.Id, &res.Name, &res.Age, &res.Address, &res.Work)
-	if err != nil {
-		return nil, DbStatus{code: 404}
-	}
-	return res, DbStatus{code: 0}
-}
-
-func (s Dba) findPersonById(id int64) (model.PersonData, DbStatus) {
-	row := s.db.QueryRow(
-		`SELECT id, name, age, address, work
-				FROM person
-				WHERE id = $1`,
-		id)
+				WHERE id = $1`, id)
 	var res model.PersonData
 
 	err := row.Scan(&res.Id, &res.Name, &res.Age, &res.Address, &res.Work)
@@ -136,21 +120,21 @@ func (s Dba) findPersonById(id int64) (model.PersonData, DbStatus) {
 	return res, DbStatus{code: 0}
 }
 
-func (s Dba) addNewPerson(request *model.PersonRequest) (int64, DbStatus) {
-	var id int64
+func (s Dba) addNewPerson(request *model.PersonRequest) (string, DbStatus) {
+	var id string
 	err := s.db.QueryRow(
-		`INSERT INTO person (name, age, address, work)
-				VALUES ($1, $2, $3, $4)
+		`INSERT INTO person (id, name, age, address, work)
+				VALUES ($1, $2, $3, $4, $5)
 				RETURNING id`,
-		request.Name, request.Age, request.Address, request.Work).Scan(&id)
+		request.Id, request.Name, request.Age, request.Address, request.Work).Scan(&id)
 	if err != nil {
 		log.Println(err)
-		return 0, DbStatus{code: 500}
+		return "", DbStatus{code: 500}
 	}
 	return id, DbStatus{code: 0}
 }
 
-func (s Dba) updatePersonById(id int64, request *model.PersonRequest) DbStatus {
+func (s Dba) updatePersonById(id string, request *model.PersonRequest) DbStatus {
 	person, personErr := s.findPersonById(id)
 
 	if personErr.code == 0 {
@@ -189,7 +173,7 @@ func (s Dba) updatePersonById(id int64, request *model.PersonRequest) DbStatus {
 	return DbStatus{code: 0}
 }
 
-func (s Dba) deletePersonById(id int64) DbStatus {
+func (s Dba) deletePersonById(id string) DbStatus {
 	var count int
 	err := s.db.QueryRow(
 		`WITH deleted AS (DELETE FROM person WHERE id = $1 RETURNING id)

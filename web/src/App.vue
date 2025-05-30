@@ -1,26 +1,34 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <v-app>
+        <component :is="currentLayout" v-if="isRouterLoaded">
+            <router-view/>
+        </component>
+    </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+
+import authLayout from "@/layout/AuthLayout.vue";
+import errorLayout from "@/layout/ErrorLayout.vue";
+import defaultLayout from "@/layout/DefaultLayout.vue";
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
+    components: {
+        authLayout,
+        errorLayout,
+        defaultLayout,
+    },
+    computed: {
+        isRouterLoaded: function () {
+            return this.$route.name !== null;
+        },
+        currentLayout: function () {
+            return `${this.$route.meta.layout || 'default'}Layout`;
+        }
+    },
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+
 </style>

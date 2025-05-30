@@ -23,24 +23,24 @@ export class LoyaltyThirdService extends Healthy {
         }
     }
 
-    async getLoyaltyForUser(userName: string): Promise<ThirdWrapper<LoyaltyInfo>> {
+    async getLoyaltyForUser(userUid: string): Promise<ThirdWrapper<LoyaltyInfo>> {
         const wrapper = await this.runWithProtect(
-            async () => fetch(`${this.url}/loyalty?name=${userName}`));
+            async () => fetch(`${this.url}/loyalty?userUid=${userUid}`));
 
         if (wrapper.failed) return { failed: true, result: this.getDefaultFallback() };
         if (wrapper.result?.status !== 200) return { failed: false, result: null };
         return { result: await wrapper.result.json() };
     }
 
-    async changeLoyaltyStatus(name: string, type: 'inc' | 'dec') {
+    async changeLoyaltyStatus(userUid: string, type: 'inc' | 'dec') {
         const wrapper = await this.runWithProtect(
-            async () => fetch(`${this.url}/update?name=${name}&type=${type}`, { method: 'POST' }));
+            async () => fetch(`${this.url}/update?userUid=${userUid}&type=${type}`, { method: 'POST' }));
         return wrapper.result?.status === 200;
     }
 
-    async setForceForUser(name: string, info: LoyaltyInfo) {
+    async setForceForUser(userUid: string, info: LoyaltyInfo) {
         const wrapper = await this.runWithProtect(async () => fetch(
-            `${this.url}/force?name=${name}&reservations=${info.reservationCount}&discount=${info.discount}&status=${info.status}`,
+            `${this.url}/force?userUid=${userUid}&reservations=${info.reservationCount}&discount=${info.discount}&status=${info.status}`,
             { method: 'POST' }
         ));
         return wrapper.result?.status === 200;

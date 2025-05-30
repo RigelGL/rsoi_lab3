@@ -6,6 +6,10 @@ metadata:
   name: initdb-config
 data:
   init.sql: |
+    CREATE DATABASE logger;
+    CREATE USER logger WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE logger TO logger;
+
     CREATE DATABASE auth;
     CREATE USER auth WITH PASSWORD 'postgres';
     GRANT ALL PRIVILEGES ON DATABASE auth TO auth;
@@ -26,18 +30,28 @@ data:
     CREATE USER payment WITH PASSWORD 'postgres';
     GRANT ALL PRIVILEGES ON DATABASE payment TO payment;
 
+
+    \c logger
+    GRANT ALL PRIVILEGES ON SCHEMA public TO logger;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO logger;
+
     \c auth
     GRANT ALL PRIVILEGES ON SCHEMA public TO auth;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO auth;
 
     \c person
     GRANT ALL PRIVILEGES ON SCHEMA public TO person;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO person;
 
     \c loyalty
     GRANT ALL PRIVILEGES ON SCHEMA public TO loyalty;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO loyalty;
 
     \c reservation
     GRANT ALL PRIVILEGES ON SCHEMA public TO reservation;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO reservation;
 
     \c payment
     GRANT ALL PRIVILEGES ON SCHEMA public TO payment;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO payment;
     {{- end -}}

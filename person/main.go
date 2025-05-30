@@ -3,15 +3,20 @@ package main
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
+	"github.com/segmentio/kafka-go"
 	"os"
-	_ "rsoi/docs"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/lib/pq"
 
 	"log"
 )
+
+func closeProducer() {
+	writer.Close()
+}
 
 // init is invoked before main()
 func init() {
@@ -20,16 +25,26 @@ func init() {
 	}
 }
 
-// @title Persons API
-// @version 0.1
-// @description Апи для лабы 1
-// @contact.name RigelLab
-// @contact.url https://t.me/rigellabru
-// @host rsoi-awsy.onrender.com
-// @BasePath /api/v1
 func main() {
 	ConnectDba(os.Getenv("DB_HOST"), os.Getenv("DB_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
 	GetDba().initTables()
+
+	writer = &kafka.Writer{
+		Addr:     kafka.TCP("localhost:9092"),
+		Topic:    "logs",
+		Balancer: &kafka.LeastBytes{},
+	}
+
+	defer closeProducer()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigs
+		closeProducer()
+		os.Exit(0)
+	}()
 
 	app := fiber.New()
 
@@ -41,12 +56,11 @@ func main() {
 	v1 := app.Group("/api/v1")
 	BindApi(v1)
 
-	app.Get("/swagger/*", swagger.HandlerDefault)
-
 	port, exists := os.LookupEnv("APP_PORT")
 	if !exists {
 		port = "8080"
 	}
 	fmt.Printf("Server runs at %v\n", port)
+	SendLog("Starting")
 	log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))
 }

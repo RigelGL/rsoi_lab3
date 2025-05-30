@@ -9,8 +9,28 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class Main {
+    private static KafkaProducer<String, String> producer;
+
+    public static void sendLog(String message, String level) {
+        producer.send(new ProducerRecord<>("logs",
+                "{" +
+                "\"service\":\"loyalty\"," +
+                " \"level\":\"" + level +
+                "\", \"message\":\"" + message.replace("\"", "\\\"") +
+                "\"}")
+        );
+    }
+
+    public static void sendLog(String message) {
+        sendLog(message, "info");
+    }
+
     public static Map<String, String> parseQuery(String query) {
         Map<String, String> result = new HashMap<>();
         if (query == null)
@@ -26,7 +46,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Map<String, String> dotEnv = new HashMap<>();
+        var dotEnv = new HashMap<String, String>();
         try (var reader = new BufferedReader(new FileReader(".env"))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -34,19 +54,30 @@ public class Main {
                 if (sep.length == 2)
                     dotEnv.put(sep[0], sep[1]);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.out.println(".env file not found. Using system environment variables");
         }
 
-        String DB_HOST = System.getenv("DB_HOST");
-        String DB_NAME = System.getenv("DB_NAME");
-        String DB_USER = System.getenv("DB_USER");
-        String DB_PASSWORD = System.getenv("DB_PASSWORD");
+        var DB_HOST = System.getenv("DB_HOST");
+        var DB_NAME = System.getenv("DB_NAME");
+        var DB_USER = System.getenv("DB_USER");
+        var DB_PASSWORD = System.getenv("DB_PASSWORD");
+        var KAFKA = System.getenv("KAFKA");
 
         if (DB_HOST == null) DB_HOST = dotEnv.get("DB_HOST");
         if (DB_NAME == null) DB_NAME = dotEnv.get("DB_NAME");
         if (DB_USER == null) DB_USER = dotEnv.get("DB_USER");
         if (DB_PASSWORD == null) DB_PASSWORD = dotEnv.get("DB_PASSWORD");
+        if (KAFKA == null) KAFKA = dotEnv.get("KAFKA");
+
+        var props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        producer = new KafkaProducer<>(props);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> producer.close()));
 
         System.out.println("DB: " + DB_HOST + "/" + DB_NAME + ", user " + DB_USER);
 
@@ -55,10 +86,12 @@ public class Main {
             var s = System.getenv("APP_PORT");
             if (s == null) s = dotEnv.get("APP_PORT");
             port = Integer.parseInt(s);
-        } catch (NumberFormatException ignored) {
+        }
+        catch (NumberFormatException ignored) {
         }
 
         System.out.println("Loyalty starts on " + port);
+        sendLog("Loyalty starts on " + port);
 
         JDBCConnectionPool.init(DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, 10);
 
@@ -69,9 +102,12 @@ public class Main {
                 try (var p = con.prepareStatement(initSql)) {
                     p.executeUpdate();
                     System.out.println("Database updated");
+                    sendLog("Database updated");
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
+            sendLog("Cant update database " + e.getMessage(), "error");
             e.printStackTrace();
         }
 
@@ -85,19 +121,17 @@ public class Main {
 
             try {
                 var query = parseQuery(t.getRequestURI().getQuery());
-                var userName = query.getOrDefault("name", null);
-                var loyalty = LoyaltyService.getInstance().getLoyaltyForUser(userName);
+                var userUid = query.getOrDefault("userUid", null);
+                var loyalty = LoyaltyService.getInstance().getLoyaltyForUser(userUid);
 
                 if (loyalty == null)
-                    loyalty = LoyaltyService.getInstance().getLoyaltyForNewUser(userName);
+                    loyalty = LoyaltyService.getInstance().getLoyaltyForNewUser(userUid);
 
-                // Fastest json serialization go brrrr
+                // Fastest json serialization goes brrrr
                 String json = "{\"status\":\"" + loyalty.status
-                        + "\",\"discount\":" + loyalty.discount
-                        + ",\"reservationCount\":" + loyalty.reservationCount
-                        + "}";
-
-                System.out.println(json);
+                              + "\",\"discount\":" + loyalty.discount
+                              + ",\"reservationCount\":" + loyalty.reservationCount
+                              + "}";
 
                 var b = json.getBytes(StandardCharsets.UTF_8);
                 t.sendResponseHeaders(200, b.length);
@@ -105,9 +139,12 @@ public class Main {
                 var os = t.getResponseBody();
                 os.write(b);
                 os.close();
-            } catch (Exception e) {
+                sendLog("/loyalty " + userUid);
+            }
+            catch (Exception e) {
                 e.printStackTrace();
                 t.close();
+                sendLog("/loyalty " + e.getMessage(), "error");
             }
         });
 
@@ -119,7 +156,7 @@ public class Main {
 
             try {
                 var query = parseQuery(t.getRequestURI().getQuery());
-                var userName = query.getOrDefault("name", null);
+                var userUid = query.getOrDefault("userUid", null);
                 var type = query.getOrDefault("type", "none");
 
                 if (!"inc".equals(type) && !"dec".equals(type) && !"none".equals(type)) {
@@ -131,12 +168,15 @@ public class Main {
                     return;
                 }
 
-                var ok = LoyaltyService.getInstance().updateLoyalty(userName, type);
+                var ok = LoyaltyService.getInstance().updateLoyalty(userUid, type);
                 t.sendResponseHeaders(ok ? 200 : 500, 0);
                 t.close();
-            } catch (Exception e) {
+                sendLog("POST /update " + userUid, ok ? "info" : "warning");
+            }
+            catch (Exception e) {
                 e.printStackTrace();
                 t.close();
+                sendLog("POST /update " + e.getMessage(), "error");
             }
         });
 
@@ -148,17 +188,21 @@ public class Main {
 
             try {
                 var query = parseQuery(t.getRequestURI().getQuery());
-                var userName = query.getOrDefault("name", null);
+                var userUid = query.getOrDefault("userUid", null);
                 int reservations = Integer.parseInt(query.getOrDefault("reservations", "0"));
                 int discount = Integer.parseInt(query.getOrDefault("discount", "0"));
                 var status = query.getOrDefault("status", null);
 
-                var ok = LoyaltyService.getInstance().addOrUpdateLoyalty(userName, new LoyaltyDto(userName, status, discount, reservations));
+                var ok = LoyaltyService.getInstance().addOrUpdateLoyalty(userUid, new LoyaltyDto(userUid, status, discount, reservations));
                 t.sendResponseHeaders(ok ? 200 : 500, 0);
                 t.close();
-            } catch (Exception e) {
+
+                sendLog("POST /force " + userUid + " (" + reservations + "/" + discount + "/" + status + ")", ok ? "info" : "warning");
+            }
+            catch (Exception e) {
                 e.printStackTrace();
                 t.close();
+                sendLog("POST /force " + e.getMessage(), "error");
             }
         });
 

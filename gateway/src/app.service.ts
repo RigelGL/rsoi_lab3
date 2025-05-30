@@ -14,14 +14,15 @@ export class AppService {
     }
 
     async prepareMockForTests() {
-        await this.person.addPerson({
+        const personId = await this.person.addPerson({
+            id: 'testuser',
             name: 'Test Max',
             age: 20,
             work: 'BMSTU',
             address: 'Russia, Moscow'
         });
 
-        await this.loyalty.setForceForUser('Test Max', {
+        await this.loyalty.setForceForUser(personId, {
             reservationCount: 25,
             discount: 10,
             status: 'GOLD'
@@ -34,7 +35,8 @@ export class AppService {
             city: 'Москва',
             address: 'Неглинная ул., 4',
             stars: 5,
-            price: 10000
+            price: 10000,
+            image: null,
         });
     }
 }

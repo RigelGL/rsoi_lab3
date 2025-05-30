@@ -26,6 +26,7 @@ export type HotelInfo = {
     fullAddress?: string;
     price: number;
     stars: number;
+    image: string;
 };
 
 
@@ -54,6 +55,7 @@ export type LoyaltyInfo = {
 
 
 export type PersonRequest = {
+    id: string;
     name: string;
     age: number;
     address: string;

@@ -1,7 +1,7 @@
 package model
 
 type PersonData struct {
-	Id      int64   `json:"id"`
+	Id      *string `json:"id"`
 	Name    *string `json:"name"`
 	Age     *int32  `json:"age"`
 	Address *string `json:"address"`
@@ -9,6 +9,7 @@ type PersonData struct {
 }
 
 type PersonRequest struct {
+	Id      *string `json:"id"`
 	Name    *string `json:"name"`
 	Age     *int32  `json:"age"`
 	Address *string `json:"address"`

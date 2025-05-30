@@ -8,7 +8,7 @@ import { CreateReservationWrapper } from "./wrapper";
 
 @Injectable()
 export class ApiService {
-    private cancelReservationsQueue: { paymentUid: string, loyaltyName: string }[];
+    private cancelReservationsQueue: { paymentUid: string, userUid: string }[];
 
     constructor(
         private readonly persons: PersonThirdService,
@@ -33,12 +33,12 @@ export class ApiService {
                 }
 
                 // нужно понизить лояльность
-                if (e.loyaltyName) {
-                    if (await this.loyalty.changeLoyaltyStatus(e.loyaltyName, 'dec'))
-                        e.loyaltyName = null;
+                if (e.userUid) {
+                    if (await this.loyalty.changeLoyaltyStatus(e.userUid, 'dec'))
+                        e.userUid = null;
                 }
 
-                if (!e.paymentUid && !e.loyaltyName)
+                if (!e.paymentUid && !e.userUid)
                     this.cancelReservationsQueue.splice(i, 1);
                 else
                     i++;
@@ -51,23 +51,23 @@ export class ApiService {
     }
 
 
-    async getMe(userName: string): Promise<UserInfo> {
-        const user = await this.persons.getPersonByName(userName) as UserInfo;
+    async getMe(userUid: string): Promise<UserInfo> {
+        const user = await this.persons.getPersonById(userUid) as UserInfo;
         if (!user)
             return null;
 
-        user.reservations = await this.getMyReservations(userName) || [];
-        const loyaltyWrapper = (await this.loyalty.getLoyaltyForUser(userName));
+        user.reservations = await this.getMyReservations(userUid) || [];
+        const loyaltyWrapper = (await this.loyalty.getLoyaltyForUser(userUid));
         user.loyalty = loyaltyWrapper.failed ? {} : (loyaltyWrapper.result || this.loyalty.getDefaultFallback());
 
         return user;
     }
 
-    async getMyReservations(userName: string): Promise<ReservationInfo[]> {
-        return await this.getReservations({ userName });
+    async getMyReservations(userUid: string): Promise<ReservationInfo[]> {
+        return await this.getReservations({ userUid });
     }
 
-    async getReservations(options: { userName?: string, uid?: string }): Promise<ReservationInfo[]> {
+    async getReservations(options: { userUid?: string, uid?: string, page?: number, limit?: number }): Promise<ReservationInfo[]> {
         const reservations = await this.reservation.getReservations(options);
 
         const payments = new Map<string, PaymentInfo>();
@@ -79,12 +79,12 @@ export class ApiService {
     }
 
 
-    async createReservation(name: string, body: CreateReservationRequest): Promise<CreateReservationWrapper> {
+    async createReservation(userUid: string, body: CreateReservationRequest): Promise<CreateReservationWrapper> {
         const hotel = await this.reservation.getHotel(body.hotelUid);
         // нет отеля
         if (!hotel) return { error: 'hotel' };
 
-        const loyaltyWrapper = await this.loyalty.getLoyaltyForUser(name);
+        const loyaltyWrapper = await this.loyalty.getLoyaltyForUser(userUid);
         // сервис лояльности недоступен
         if (loyaltyWrapper.failed) return { error: 'loyalty' };
 
@@ -95,7 +95,7 @@ export class ApiService {
             start = end;
             end = tmp;
         }
-        const deltaDays = (+end - +start) / 86400_000;
+        const deltaDays = (+end - +start) / 86400_000 + 1;
 
         const prisePerDay = hotel.price;
         const coefficient = 1 - loyaltyWrapper.result.discount / 100;
@@ -107,7 +107,7 @@ export class ApiService {
         if (!payment) return { error: 'payment' };
 
         const reservation = await this.reservation.addReservation({
-            userName: name,
+            userUid: userUid,
             hotelUid: hotel.hotelUid,
             paymentUid: payment.paymentUid,
             startDate: start.toISOString().substring(0, 10),
@@ -121,7 +121,7 @@ export class ApiService {
         }
 
         // сервис лояльности недоступен - отменяем оплату и резервирование
-        if (!await this.loyalty.changeLoyaltyStatus(name, 'inc')) {
+        if (!await this.loyalty.changeLoyaltyStatus(userUid, 'inc')) {
             await this.payment.cancelPayment(payment.paymentUid);
             await this.reservation.cancelReservation(reservation.reservationUid);
             return { error: 'loyaltyUpd' };
@@ -140,20 +140,23 @@ export class ApiService {
         }
     }
 
-    async cancelReservation(name: string, uid: string) {
-        const reservation = (await this.reservation.getReservations({ userName: name, uid }))[0];
+    async cancelReservation(userUid: string, uid: string) {
+        const reservation = (await this.reservation.getReservations({ userUid: userUid, uid }))[0];
 
-        if (!reservation || reservation.status === 'CANCELED') return 'reservation';
+        if (!reservation || reservation.status === 'CANCELED')
+            return 'reservation';
 
-        if (!await this.reservation.cancelReservation(uid)) return 'cancelReservation';
+        if (!await this.reservation.cancelReservation(uid))
+            return 'cancelReservation';
+
         if (!await this.payment.cancelPayment(reservation.payment.paymentUid)) {
             console.log('Cant cancel payment, add to QUEUE');
-            this.cancelReservationsQueue.push({ paymentUid: reservation.payment.paymentUid, loyaltyName: name });
+            this.cancelReservationsQueue.push({ paymentUid: reservation.payment.paymentUid, userUid: userUid });
             return null;
         }
-        if (!await this.loyalty.changeLoyaltyStatus(name, 'dec')) {
+        if (!await this.loyalty.changeLoyaltyStatus(userUid, 'dec')) {
             console.log('Cant cancel payment, add to QUEUE');
-            this.cancelReservationsQueue.push({ paymentUid: null, loyaltyName: name });
+            this.cancelReservationsQueue.push({ paymentUid: null, userUid: userUid });
             return null;
         }
         return null;

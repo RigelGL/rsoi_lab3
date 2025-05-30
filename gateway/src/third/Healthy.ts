@@ -22,7 +22,12 @@ export class Healthy {
     }
 
     private async checkHealth() {
-        return (await fetch(`${this.url}/manage/health}`)).status === 200;
+        try {
+            return (await fetch(`${this.url}/manage/health}`)).status === 200;
+        }
+        catch (e) {
+            return false;
+        }
     }
 
     private processFailed() {
@@ -34,7 +39,7 @@ export class Healthy {
         // fail rate > max fails per time
         if (this.fails.length >= this.config.maxFails) {
             this.state = 'FAILED';
-            this.testingTimeout = setTimeout(this.retry, this.config.afterFailWaitMs);
+            this.testingTimeout = setTimeout(this.retry.bind(this), this.config.afterFailWaitMs);
         }
     }
 
@@ -45,7 +50,7 @@ export class Healthy {
             return;
         }
         // test again
-        this.testingTimeout = setTimeout(this.retry, this.config.retryIntervalMs);
+        this.testingTimeout = setTimeout(this.retry.bind(this), this.config.retryIntervalMs);
     }
 
     protected async runWithProtect(fun: any, failBack: any = null): Promise<ThirdWrapper<Response>> {
@@ -54,7 +59,8 @@ export class Healthy {
 
         try {
             return { result: await fun(), failed: false };
-        } catch (e) {
+        }
+        catch (e) {
             this.fails.push(Date.now());
             this.processFailed();
             return { result: failBack, failed: true };

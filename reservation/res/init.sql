@@ -9,7 +9,8 @@ create table if not exists hotels
     city      varchar(80)  not null,
     address   varchar(255) not null,
     stars     integer,
-    price     integer      not null
+    price     integer      not null,
+    image     text default null
 );
 
 create table if not exists reservation
@@ -18,7 +19,7 @@ create table if not exists reservation
         primary key,
     reservation_uid uuid        not null
         unique,
-    username        varchar(80) not null,
+    user_uid        varchar(24) not null,
     payment_uid     uuid        not null,
     hotel_id        integer
         references hotels,

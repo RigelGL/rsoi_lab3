@@ -22,14 +22,14 @@ export class PersonThirdService extends Healthy {
         return await wrapper.result.json();
     }
 
-    async getPersonByName(name: string): Promise<PersonInfo | null> {
+    async getPersonById(id: string): Promise<PersonInfo | null> {
         const wrapper = await this.runWithProtect(
-            async () => fetch(`${this.url}/api/v1/persons/named?name=${name}`));
+            async () => fetch(`${this.url}/api/v1/persons/${id}`));
         if (wrapper.failed || wrapper.result?.status !== 200) return null;
         return await wrapper.result.json();
     }
 
-    async addPerson(request: PersonRequest): Promise<PersonInfo | null> {
+    async addPerson(request: PersonRequest): Promise<string | null> {
         let wrapper = await this.runWithProtect(
             async () => fetch(`${this.url}/api/v1/persons`, {
                 method: 'POST',
@@ -38,7 +38,28 @@ export class PersonThirdService extends Healthy {
             }),
             null
         );
-        if (wrapper.failed || wrapper.result?.status !== 201) return null;
-        return await this.getPersonByName(request.name);
+        if (wrapper.failed || wrapper.result?.status >= 300) return null;
+        return (await wrapper.result.json()).id;
+    }
+
+    async updatePerson(id: string, request: PersonRequest): Promise<PersonInfo | null> {
+        let wrapper = await this.runWithProtect(
+            async () => fetch(`${this.url}/api/v1/persons/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-type': 'application/json;charset=utf-8' },
+                body: JSON.stringify(request),
+            }),
+            null
+        );
+        if (wrapper.failed || wrapper.result?.status >= 300) return null;
+        return await this.getPersonById((await wrapper.result.json()).id);
+    }
+
+    async deletePerson(id: string): Promise<boolean> {
+        let wrapper = await this.runWithProtect(
+            async () => fetch(`${this.url}/api/v1/persons/${id}`, { method: 'DELETE' }),
+            null
+        );
+        return !(wrapper.failed || wrapper.result?.status >= 300);
     }
 }

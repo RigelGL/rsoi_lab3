@@ -11,16 +11,18 @@ import {
     Delete,
     Param,
     BadGatewayException,
-    GoneException,
-    ServiceUnavailableException
+    ServiceUnavailableException,
+    Req, ForbiddenException, Patch, GoneException
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ApiService } from './api.service';
 import { PersonThirdService } from "../third/person.third.service";
 import { PaymentThirdService } from "../third/payment.third.service";
 import { LoyaltyThirdService } from "../third/loyalty.third.service";
 import { ReservationThirdService } from "../third/reservation.third.service";
-import { CreateReservationRequest, CreateReservationResponse, PersonRequest } from "./dto";
+import { CreateReservationRequest, PersonRequest } from "./dto";
 import { CreateReservationWrapper } from "./wrapper";
+import { LoggerThirdService } from "../third/loggerThirdService";
 
 
 @Controller('/api/v1')
@@ -31,52 +33,60 @@ export class ApiController {
         private readonly payment: PaymentThirdService,
         private readonly loyalty: LoyaltyThirdService,
         private readonly reservation: ReservationThirdService,
+        private readonly logger: LoggerThirdService,
     ) {
     }
 
     // USER
     @Get('me')
-    async getMe(@Headers('X-User-Name') name: string) {
-        const person = await this.service.getMe(name);
+    async getMe(@Req() req: Request) {
+        const person = await this.service.getMe(req.sub);
         if (!person)
             throw new NotFoundException();
         return person;
     }
 
     @Get('reservations')
-    async getMyReservations(@Headers('X-User-Name') name: string) {
-        return await this.service.getMyReservations(name);
+    async getMyReservations(@Req() req: Request) {
+        return await this.service.getMyReservations(req.sub);
     }
 
     @Get('reservations/:uid')
-    async getReservationForUser(@Headers('X-User-Name') name: string, @Param('uid') uid: string) {
-        const reservation = (await this.service.getReservations({ userName: name, uid: uid }))[0];
+    async getReservationForUser(@Req() req: Request, @Param('uid') uid: string) {
+        const reservation = (await this.service.getReservations({ userUid: req.sub, uid: uid }))[0];
         if (!reservation) throw new NotFoundException();
         return reservation;
     }
 
     @Get('loyalty')
-    async getMyLoyalty(@Headers('X-User-Name') name: string) {
-        const w = await this.loyalty.getLoyaltyForUser(name);
-        if (w.failed) throw new ServiceUnavailableException('Loyalty Service unavailable');
+    async getMyLoyalty(@Req() req: Request) {
+        const w = await this.loyalty.getLoyaltyForUser(req.sub);
+        if (w.failed) throw new ServiceUnavailableException({ error: 'Loyalty Service unavailable' });
         return w.result;
     }
 
 
     // HOTELS
     @Get('hotels')
-    async getHotels(@Query() query: { page: number, size: number }) {
-        const hotels = await this.reservation.getHotels(+query.page || 1, +query.size || 20);
+    async getHotels(@Query() query: { page: number, limit: number, search: string }) {
+        const hotels = await this.reservation.getHotels(+query.page || 1, +query.limit || 20, query.search);
         if (!hotels) throw new InternalServerErrorException();
         return hotels;
+    }
+
+    // HOTELS
+    @Get('hotels/:uid')
+    async getHotel(@Param('uid') uid: string) {
+        const hotel = await this.reservation.getHotel(uid);
+        if (!hotel) throw new InternalServerErrorException();
+        return hotel;
     }
 
 
     @Post('reservations')
     @HttpCode(200)
-    async addReservation(@Headers('X-User-Name') name: string, @Body() body: CreateReservationRequest) {
-        const res = await this.service.createReservation(name, body);
-
+    async addReservation(@Req() req: Request, @Body() body: CreateReservationRequest) {
+        const res = await this.service.createReservation(req.sub, body);
 
         if (res.error) {
             const map: Record<CreateReservationWrapper['error'], string> = {
@@ -87,8 +97,9 @@ export class ApiController {
                 reservation: 'Reservation Service unavailable',
             };
             const msg = map[res.error];
-            if (res.error === 'hotel') throw new NotFoundException(msg);
-            throw new ServiceUnavailableException(msg);
+            if (res.error === 'hotel')
+                throw new NotFoundException({ error: res.error, message: msg });
+            throw new ServiceUnavailableException({ error: res.error, message: msg });
         }
 
         return res.response;
@@ -96,25 +107,73 @@ export class ApiController {
 
     @Delete('reservations/:uid')
     @HttpCode(204)
-    async cancelReservation(@Headers('X-User-Name') name: string, @Param('uid') uid: string) {
-        const err = await this.service.cancelReservation(name, uid);
+    async cancelReservation(@Req() req: Request, @Param('uid') uid: string) {
+        const err = await this.service.cancelReservation(req.sub, uid);
         if (err === 'reservation') throw new NotFoundException(err);
         if (err) throw new BadGatewayException(err);
     }
 
 
-    // PERSONS
-    @Get('rawPersons')
-    async getAllPersons() {
+    // ADMIN PERSONS
+    @Get('persons')
+    async getAllPersons(@Req() req: Request) {
+        if (req.role !== 'admin')
+            throw new ForbiddenException();
         return await this.persons.getAllRawPersons();
     }
 
     @Post('person')
     @HttpCode(201)
-    async createPerson(@Body() body: PersonRequest) {
+    async createPerson(@Req() req: Request, @Body() body: PersonRequest) {
+        if (req.role !== 'admin')
+            throw new ForbiddenException();
+
         const person = await this.persons.addPerson(body);
         if (!person)
             throw new InternalServerErrorException();
         return person;
+    }
+
+    @Patch('person/:id')
+    @HttpCode(201)
+    async updatePerson(@Req() req: Request, @Param('id') id: string, @Body() body: PersonRequest) {
+        if (req.role !== 'admin')
+            throw new ForbiddenException();
+
+        const person = await this.persons.updatePerson(id, body);
+        if (!person)
+            throw new InternalServerErrorException();
+        return person;
+    }
+
+    @Delete('person/:id')
+    @HttpCode(204)
+    async deletePerson(@Req() req: Request, @Param('id') id: string) {
+        if (req.role !== 'admin')
+            throw new ForbiddenException();
+
+        const person = await this.persons.deletePerson(id);
+        if (!person)
+            throw new InternalServerErrorException();
+        return person;
+    }
+
+
+    // ADMIN RESERVATION
+    @Get('reservations/all')
+    async getAllReservations(@Req() req: Request) {
+        if (req.role !== 'admin')
+            throw new ForbiddenException();
+        return await this.service.getReservations({});
+    }
+
+
+    // ADMIN KAFKA
+    @Get('/logs')
+    async getLogs(@Req() req: Request, @Query('s') search: string) {
+        const e = await this.logger.getLogs(req.jwt, search);
+        if (!e)
+            throw new BadGatewayException({ error: 'Logger is unavailable' });
+        return e;
     }
 }

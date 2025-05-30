@@ -5,79 +5,37 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"net/http"
 	"rsoi/model"
-	"strconv"
 )
 
-// @Summary     Поиск пользователей
-// @Tags        persons
-// @Accept      json
-// @Produce     json
-// @Param       search query string false "Поиск по имени, адресу, работе"
-// @Success 200 {object} model.ArrayResult{items=[]model.PersonData} "Пользователи"
-// @Router      /persons [get]
 func getPersons(c *fiber.Ctx) error {
 	search := c.Query("search", "")
 
 	persons, err := GetDba().findPersons(search)
 
+	SendLog("getPersons " + search)
+
 	if err.code == 500 {
+		SendLog("Cant get persons "+search, "error")
 		return c.Status(500).Send(nil)
 	}
 
 	return c.JSON(persons.Items)
 }
 
-// @Summary     Поиск пользователя по имени
-// @Tags        persons
-// @Accept      json
-// @Produce     json
-// @Param       name query string true "Поиск по имени"
-// @Success 200 {object} model.PersonData "Пользователь"
-// @Router      /persons/named [get]
-func getPersonByName(c *fiber.Ctx) error {
-	name := c.Query("name", "")
-
-	person, err := GetDba().findPersonByName(name)
-
-	if err.code == 404 {
-		return c.Status(404).Send(nil)
-	}
-
-	return c.JSON(person)
-}
-
-// @Summary     Пользователь
-// @Tags        persons
-// @Accept      json
-// @Produce     json
-// @Param       id path int true "id пользователя"
-// @Success 200 {object} model.PersonData "Пользователь"
-// @failure 404 "Пользователь не найден"
-// @Router      /persons/{id} [get]
 func getPerson(c *fiber.Ctx) error {
-	id, idErr := strconv.ParseInt(c.Params("id"), 10, 64)
-
-	if idErr != nil {
-		return c.Status(400).Send(nil)
-	}
-
+	id := c.Params("id")
 	var person, err = GetDba().findPersonById(id)
 
 	if err.code == 404 {
+		SendLog("Person not found "+id, "warning")
 		return c.Status(404).Send(nil)
 	}
+
+	SendLog("Get person "+id, "info")
 
 	return c.JSON(person)
 }
 
-// @Summary     Создание пользователя
-// @Tags        persons
-// @Accept      json
-// @Param request body model.PersonRequest true "Данные о пользователе"
-// @Header  201 {string}  Location  "/api/v1/persons/{id}"
-// @Success 201 "Пользователь создан"
-// @failure 400 "Ошибка в теле запроса"
-// @Router      /persons [post]
 func addPerson(c *fiber.Ctx) error {
 	u := new(model.PersonRequest)
 
@@ -88,29 +46,21 @@ func addPerson(c *fiber.Ctx) error {
 	id, err := GetDba().addNewPerson(u)
 
 	if err.code == 500 {
+		SendLog("Cant add person", "error")
 		return c.Status(http.StatusInternalServerError).Send(nil)
 	}
 
 	c.Set("Location", fmt.Sprintf("/api/v1/persons/%v", id))
-	return c.Status(http.StatusCreated).Send(nil)
+
+	SendLog("Person added "+id, "warning")
+
+	return c.Status(http.StatusCreated).JSON(struct {
+		Id string `json:"id"`
+	}{id})
 }
 
-// @Summary     Обновление пользователя
-// @Tags        persons
-// @Accept      json
-// @Param       id path int true "id пользователя"
-// @Param request body model.PersonRequest true "Данные о пользователе"
-// @Success 204 "Пользователь обновлён"
-// @failure 400 "Ошибка в теле запроса"
-// @failure 404 "Пользователь не найден"
-// @Router      /persons/{id} [patch]
 func updatePerson(c *fiber.Ctx) error {
-	id, idErr := strconv.ParseInt(c.Params("id"), 10, 64)
-
-	if idErr != nil {
-		return c.Status(http.StatusBadRequest).Send(nil)
-	}
-
+	id := c.Params("id")
 	u := new(model.PersonRequest)
 
 	if err := c.BodyParser(u); err != nil {
@@ -120,9 +70,11 @@ func updatePerson(c *fiber.Ctx) error {
 	err := GetDba().updatePersonById(id, u)
 
 	if err.code == 404 {
+		SendLog("Person not found "+id, "warning")
 		return c.Status(http.StatusNotFound).Send(nil)
 	}
 	if err.code == 500 {
+		SendLog("Cant update person "+id, "error")
 		return c.Status(http.StatusInternalServerError).Send(nil)
 	}
 
@@ -131,26 +83,17 @@ func updatePerson(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(person)
 }
 
-// @Summary     Удаление пользователя
-// @Tags        persons
-// @Param       id path int true "id пользователя"
-// @Success 204 "Пользователь удалён"
-// @failure 404 "Пользователь не найден"
-// @Router      /persons/{id} [delete]
 func deletePerson(c *fiber.Ctx) error {
-	id, idErr := strconv.ParseInt(c.Params("id"), 10, 64)
-
-	if idErr != nil {
-		return c.Status(http.StatusBadRequest).Send(nil)
-	}
-
+	id := c.Params("id")
 	err := GetDba().deletePersonById(id)
 
 	if err.code == 404 {
+		SendLog("Cant delete person (not found) "+id, "warning")
 		return c.Status(http.StatusNotFound).Send(nil)
 	}
 
 	if err.code == 500 {
+		SendLog("Cant delete person "+id, "error")
 		return c.Status(http.StatusInternalServerError).Send(nil)
 	}
 
@@ -164,9 +107,10 @@ func BindApi(router fiber.Router) {
 	})
 
 	persons.Get("", getPersons)
-	persons.Get("named", getPersonByName)
 	persons.Get(":id", getPerson)
 	persons.Post("", addPerson)
 	persons.Patch(":id", updatePerson)
 	persons.Delete(":id", deletePerson)
+
+	SendLog("Api init")
 }

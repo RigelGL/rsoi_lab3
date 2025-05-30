@@ -32,10 +32,9 @@ export class PaymentThirdService extends Healthy {
 
         const uid = (await wrapper.result.json()).uid;
 
-        wrapper = await this.runWithProtect(async () => fetch(`${this.url}/payment/${uid}`));
-        if (wrapper.failed || wrapper.result?.status !== 200) return null;
-
-        return this.mapPayment(await wrapper.result.json());
+        const res = (await this.getPayments([uid]))?.[0];
+        if (!res) return null;
+        return res;
     }
 
     async getPayments(uids: string[]): Promise<PaymentInfo[]> {
