@@ -12,6 +12,8 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     use(req: Request, res: Response, next: NextFunction) {
+        console.log(`${req.method} ${req.originalUrl}`);
+
         const url = req.originalUrl.split(/([#?])/)[0];
         if (url.startsWith('/api/') && !this.anonymousUrls.includes(url)) {
 
@@ -24,6 +26,8 @@ export class AuthMiddleware implements NestMiddleware {
                 const payload = resp.result?.payload;
                 if (!payload)
                     return res.status(401).json({ error: resp.result?.error || 'unauthorized' }).end();
+
+                console.log(`sub ${payload.sub}, role ${payload.role}`);
 
                 req.jwt = token;
                 req.sub = payload.sub;

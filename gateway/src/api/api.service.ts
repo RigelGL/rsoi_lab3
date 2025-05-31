@@ -52,6 +52,7 @@ export class ApiService {
 
 
     async getMe(userUid: string): Promise<UserInfo> {
+        console.log('getme ' + userUid);
         const user = await this.persons.getPersonById(userUid) as UserInfo;
         if (!user)
             return null;

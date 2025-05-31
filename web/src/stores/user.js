@@ -9,9 +9,10 @@ export const useUserStore = defineStore('user', {
         login(type, login, password) {
             return new Promise(resolve => {
                 api.post('authorize', { type, login, password }).then(e => {
-                    if (e.status === 200 && e.data?.token) {
-                        this.role = parseJwt(e.data.token)?.role;
-                        localStorage.setItem('token', e.data.token);
+                    const token = e.data?.token || e.data?.jwt || '';
+                    if (e.status === 200 && token) {
+                        this.role = parseJwt(token)?.role;
+                        localStorage.setItem('token', token);
                     }
                     resolve(e);
                 });
@@ -21,7 +22,7 @@ export const useUserStore = defineStore('user', {
         logout() {
             this.user = undefined;
             this.role = null;
-            localStorage.removeItem('token');
+            console.log('logout');
         },
 
         callback(code) {
@@ -40,7 +41,7 @@ export const useUserStore = defineStore('user', {
                     this.user = e.data;
                     this.role = parseJwt(localStorage.getItem('token'))?.role;
                 }
-                else if (e.status >= 400)
+                else if (e.status === 401 || e.status === 403)
                     this.logout();
                 resolve(e);
             }));

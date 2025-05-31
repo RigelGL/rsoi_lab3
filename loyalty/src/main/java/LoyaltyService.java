@@ -12,7 +12,7 @@ public class LoyaltyService {
 
     public LoyaltyDto getLoyaltyForUser(String user) {
         try (var con = JDBCConnectionPool.instance.getConnection()) {
-            try (var p = con.prepareStatement("SELECT * FROM loyalty WHERE username = ?")) {
+            try (var p = con.prepareStatement("SELECT * FROM loyalty WHERE user_uid = ?")) {
                 p.setString(1, user);
                 var rs = p.executeQuery();
                 if (rs.next())
@@ -28,9 +28,9 @@ public class LoyaltyService {
         try (var con = JDBCConnectionPool.instance.getConnection()) {
             try (var p = con.prepareStatement(
                     """
-                            INSERT INTO loyalty (username, reservation_count, status, discount)
+                            INSERT INTO loyalty (user_uid, reservation_count, status, discount)
                             VALUES (?, ?, ?, ?)
-                            ON CONFLICT (username) DO UPDATE SET
+                            ON CONFLICT (user_uid) DO UPDATE SET
                               reservation_count = excluded.reservation_count,
                               status = excluded.status,
                               discount = excluded.discount

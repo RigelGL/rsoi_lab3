@@ -1,4 +1,4 @@
-FROM golang:1.23.1-alpine as build
+FROM golang:1.24.1-alpine as build
 
 RUN apk update && apk upgrade && apk add --no-cache
 
@@ -13,7 +13,7 @@ COPY . .
 
 RUN go build -o main .
 
-FROM golang:1.23.1-alpine
+FROM golang:1.24.1-alpine
 
 COPY --from=build /app/main /app/main
 COPY ./res ./res

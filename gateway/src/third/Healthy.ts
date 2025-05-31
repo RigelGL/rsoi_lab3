@@ -63,6 +63,7 @@ export class Healthy {
         catch (e) {
             this.fails.push(Date.now());
             this.processFailed();
+            console.log(e);
             return { result: failBack, failed: true };
         }
     }

@@ -1,0 +1,10 @@
+echo "Remove all..."
+helm uninstall rsoi-postgres
+helm uninstall rsoi-kafka
+helm uninstall rsoi-loyalty
+helm uninstall rsoi-auth
+helm uninstall rsoi-payment
+helm uninstall rsoi-person
+helm uninstall rsoi-reservation
+helm uninstall rsoi-gateway
+helm uninstall rsoi-web

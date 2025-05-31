@@ -14,5 +14,5 @@ dbInit: true
 pvc:
   enabled: true
   size: 2Gi
-  name: mysql-volume
+  name: postgres-volume
   mountPath: var/lib/postgresql/data

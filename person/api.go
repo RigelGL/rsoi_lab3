@@ -16,6 +16,7 @@ func getPersons(c *fiber.Ctx) error {
 
 	if err.code == 500 {
 		SendLog("Cant get persons "+search, "error")
+		fmt.Printf("Cant serach persons %s\n", search)
 		return c.Status(500).Send(nil)
 	}
 
@@ -28,6 +29,7 @@ func getPerson(c *fiber.Ctx) error {
 
 	if err.code == 404 {
 		SendLog("Person not found "+id, "warning")
+		fmt.Printf("Person not found %s\n", id)
 		return c.Status(404).Send(nil)
 	}
 
@@ -46,6 +48,7 @@ func addPerson(c *fiber.Ctx) error {
 	id, err := GetDba().addNewPerson(u)
 
 	if err.code == 500 {
+		fmt.Printf("Cant add person\n")
 		SendLog("Cant add person", "error")
 		return c.Status(http.StatusInternalServerError).Send(nil)
 	}
@@ -53,10 +56,10 @@ func addPerson(c *fiber.Ctx) error {
 	c.Set("Location", fmt.Sprintf("/api/v1/persons/%v", id))
 
 	SendLog("Person added "+id, "warning")
+	fmt.Printf("Person added %s\n", id)
 
-	return c.Status(http.StatusCreated).JSON(struct {
-		Id string `json:"id"`
-	}{id})
+	res := model.IdOnly{Id: &id}
+	return c.Status(http.StatusCreated).JSON(res)
 }
 
 func updatePerson(c *fiber.Ctx) error {

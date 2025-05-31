@@ -9,3 +9,5 @@ env:
   LOYALTY_URL: http://rsoi-loyalty:8050
   PAYMENT_URL: http://rsoi-payment:8060
   RESERVATION_URL: http://rsoi-reservation:8070
+  KAFKA: rsoi-kafka:9092
+  JWKS: rsoi-auth:8030/well-known

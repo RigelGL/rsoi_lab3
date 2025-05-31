@@ -4,9 +4,9 @@ metadata:
   name: {{ .Values.name }}
 spec:
   selector:
-    app: {{ .Values.name }}-app
+    app: {{ .Values.name }}
   ports:
     - protocol: TCP
       port: {{ .Values.servicePort | default .Values.port }}
       targetPort: {{ .Values.port }}
-  type: {{ .Values.serviceType | default "ClusterIP" }}
+  type: ClusterIP

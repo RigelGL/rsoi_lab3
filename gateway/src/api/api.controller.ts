@@ -22,7 +22,7 @@ import { LoyaltyThirdService } from "../third/loyalty.third.service";
 import { ReservationThirdService } from "../third/reservation.third.service";
 import { CreateReservationRequest, PersonRequest } from "./dto";
 import { CreateReservationWrapper } from "./wrapper";
-import { LoggerThirdService } from "../third/loggerThirdService";
+import { LoggerThirdService } from "../third/logger.third.service";
 
 
 @Controller('/api/v1')
@@ -42,7 +42,7 @@ export class ApiController {
     async getMe(@Req() req: Request) {
         const person = await this.service.getMe(req.sub);
         if (!person)
-            throw new NotFoundException();
+            throw new NotFoundException({ error: 'person not found' });
         return person;
     }
 

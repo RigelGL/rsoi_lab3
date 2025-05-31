@@ -15,3 +15,7 @@ type PersonRequest struct {
 	Address *string `json:"address"`
 	Work    *string `json:"work"`
 }
+
+type IdOnly struct {
+	Id *string `json:"id"`
+}

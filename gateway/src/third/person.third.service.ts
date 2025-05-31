@@ -38,7 +38,17 @@ export class PersonThirdService extends Healthy {
             }),
             null
         );
-        if (wrapper.failed || wrapper.result?.status >= 300) return null;
+
+        if (wrapper.failed || wrapper.result?.status >= 300) {
+            try {
+                console.log(await wrapper.result.json());
+                return null;
+            }
+            catch (e) {
+                console.log(e);
+                return null;
+            }
+        }
         return (await wrapper.result.json()).id;
     }
 

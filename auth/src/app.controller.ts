@@ -94,7 +94,7 @@ export class AppController {
     async redirectedAuth(@Query('code') code: string) {
         const res = await this.appService.callback(code);
         if(!res || res.error)
-            throw new BadRequestException({ error: res.error || 'bad auth' });
+            throw new BadRequestException({ error: res?.error || 'bad auth' });
         return res;
     }
 

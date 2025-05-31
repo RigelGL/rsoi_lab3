@@ -8,15 +8,14 @@ import { ApiController } from "./api/api.controller";
 import { PaymentThirdService } from "./third/payment.third.service";
 import { PersonThirdService } from "./third/person.third.service";
 import { AppService } from "./app.service";
-import { TestController } from "./test.controller";
 import { AuthThirdService } from "./third/auth.third.service";
 import { AuthMiddleware } from "./middleware";
-import { LoggerThirdService } from "./third/loggerThirdService";
+import { LoggerThirdService } from "./third/logger.third.service";
 
 
 @Module({
     imports: [ConfigModule.forRoot({ envFilePath: '.env' })],
-    controllers: [AppController, ApiController, TestController],
+    controllers: [AppController, ApiController],
     providers: [
         ApiService,
         AppService,

@@ -83,6 +83,7 @@ export default {
         },
         logout() {
             this.store.logout();
+            localStorage.removeItem('token');
             this.$router.push('/login');
         },
     },

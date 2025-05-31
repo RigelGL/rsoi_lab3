@@ -1,5 +1,3 @@
-#!/bin/bash
-
 cd ./auth
 ./publish.sh
 

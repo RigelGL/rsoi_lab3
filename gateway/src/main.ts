@@ -30,5 +30,5 @@ declare global {
 
     const port = process.env.GATEWAY_PORT ?? 3000;
     console.log(`Gateway runs on ${port}`);
-    await app.listen(port);
+    await app.listen(port, '0.0.0.0');
 })();

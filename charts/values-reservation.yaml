@@ -10,3 +10,4 @@ env:
   DB_USER: reservation
   DB_PASSWORD: postgres
   KAFKA: rsoi-kafka:9092
+  JWKS: rsoi-auth:8030/well-known

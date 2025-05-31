@@ -39,5 +39,5 @@ import { NestExpressApplication } from "@nestjs/platform-express";
     }
     conn.end();
 
-    await app.listen(port, '127.0.0.1');
+    await app.listen(port, '0.0.0.0');
 })();

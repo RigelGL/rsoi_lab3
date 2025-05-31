@@ -124,7 +124,7 @@ func (s Dba) addNewPerson(request *model.PersonRequest) (string, DbStatus) {
 	var id string
 	err := s.db.QueryRow(
 		`INSERT INTO person (id, name, age, address, work)
-				VALUES ($1, $2, $3, $4, $5)
+				VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET name = $2, age = $3, address = $4, work = $5
 				RETURNING id`,
 		request.Id, request.Name, request.Age, request.Address, request.Work).Scan(&id)
 	if err != nil {

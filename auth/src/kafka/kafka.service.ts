@@ -13,38 +13,28 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
             this.producer = this.kafka.producer();
         }
         catch (e) {
+            console.log('KafkaService.constructor');
+            console.log(e);
         }
     }
 
     async onModuleInit(): Promise<void> {
         try {
-            await this.connect();
+            await this.producer.connect();
         }
         catch (e) {
+            console.log('KafkaService.onModuleInit');
+            console.log(e);
         }
     }
 
     async onModuleDestroy(): Promise<void> {
         try {
-            await this.disconnect();
-        }
-        catch (e) {
-        }
-    }
-
-    async connect() {
-        try {
-            await this.producer.connect();
-        }
-        catch (e) {
-        }
-    }
-
-    async disconnect() {
-        try {
             await this.producer.disconnect();
         }
         catch (e) {
+            console.log('KafkaService.onModuleDestroy');
+            console.log(e);
         }
     }
 
@@ -55,6 +45,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
                 .catch(e => console.error(e.message, e));
         }
         catch (e) {
+            console.log('KafkaService.sendMessage');
+            console.log(e);
         }
     }
 }

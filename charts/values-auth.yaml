@@ -6,6 +6,7 @@ env:
   DB_URL: rsoi-postgres/auth
   DB_USER: auth
   DB_PASSWORD: postgres
+  JWT_LIFETIME: 2592000
   KAFKA: rsoi-kafka:9092
   OAUTH_REDICRECT: "http://example.com/callback"
 

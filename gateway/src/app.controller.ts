@@ -18,6 +18,16 @@ export class AppController {
         if (result.failed || !result.result)
             throw new InternalServerErrorException({ error: result.result?.error || 'failed to authorize' });
 
+        const jwt = result.result?.jwt;
+        const user: { sub: string, name: string } = result.result?.user;
+
+        if (jwt) {
+            const person = await this.persons.getPersonById(user.sub);
+            console.log(person);
+            if (person === null)
+                await this.persons.addPerson({ id: user.sub, name: user.name, age: 0, address: '', work: '' });
+        }
+
         return result.result;
     }
 
@@ -32,6 +42,7 @@ export class AppController {
         const user: { sub: string, name: string } = result.result.user;
 
         const person = await this.persons.getPersonById(user.sub);
+        console.log(person);
         if (person === null)
             await this.persons.addPerson({ id: user.sub, name: user.name, age: 0, address: '', work: '' });
 

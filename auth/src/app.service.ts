@@ -11,6 +11,13 @@ type Oauth = {
     clientSecret: string;
 };
 
+type UserResponse = {
+    sub: string;
+    name: string;
+    email: string;
+    role: string;
+}
+
 @Injectable()
 export class AppService {
     private readonly yandex: Oauth;
@@ -49,8 +56,7 @@ export class AppService {
 
             console.log('RSA KEYS LOADED');
             kafka.sendMessage('RSA KEYS LOADED');
-        }
-        catch (error) {
+        } catch (error) {
             console.log('CANT LOAD KEYS!');
             console.log(error);
             kafka.sendMessage('CANT LOAD KEYS!\n' + error, 'severe')
@@ -90,7 +96,7 @@ export class AppService {
         return sub;
     }
 
-    private async getOrCreateAuth0User(provider: string, email: string, name: string, providerId?: string): Promise<null | { sub: string, name: string, email: string, role: string }> {
+    private async getOrCreateAuth0User(provider: string, email: string, name: string, providerId?: string): Promise<null | UserResponse> {
         let runner: null | QueryRunner = null;
 
         try {
@@ -108,8 +114,7 @@ export class AppService {
 
                     user = (await runner.query('SELECT sub, email, name, role FROM account WHERE google_id = $1', [providerId]))[0];
                 }
-            }
-            else if (provider === 'yandex') {
+            } else if (provider === 'yandex') {
                 user = (await runner.query('SELECT sub, email, name, role FROM account WHERE yandex_id = $1 OR email = $2', [providerId, email]))[0];
                 if (!user || user?.email !== email || user?.name !== name) {
                     if (!user)
@@ -123,15 +128,12 @@ export class AppService {
 
             await runner.query('COMMIT');
             return user;
-        }
-        catch (error) {
+        } catch (error) {
             console.error(error);
-        }
-        finally {
+        } finally {
             try {
                 runner?.release();
-            }
-            catch (error) {
+            } catch (error) {
             }
         }
         return null;
@@ -189,7 +191,7 @@ export class AppService {
         return payload;
     }
 
-    async authorize(request: AuthRequest): Promise<null | { redirectUrl?: string, error?: string }> {
+    async authorize(request: AuthRequest): Promise<null | { redirectUrl?: string, jwt?: string, user?: UserResponse, error?: string }> {
         if (request.type === 'yandex') {
             if (!this.yandex)
                 return null;
@@ -212,27 +214,27 @@ export class AppService {
         }
 
         if (request.type === 'self') {
-            // TODO: auth login, password
-            // const password = request.password?.trim() || '';
-            // const login = request.login?.trim() || '';
-            //
-            // if (!password || !login)
-            //     return { error: 'Login and password is required' };
-            //
-            // const user = (await this.connection.query('SELECT sub, password FROM account WHERE email = $1', [login]))[0];
-            // if (!user)
-            //     return { error: 'Invalid email' };
-            //
-            // if (user.password === null)
-            //     return { error: 'User does not uses password auth' };
-            //
-            // if (user.password.startsWith('plain:')) {
-            //     const password = user.password.substring('plain:'.length);
-            //     if(password === request.password) {
-            //
-            //     }
-            // }
-            // return null;
+            const password = request.password?.trim() || '';
+            const login = request.login?.trim() || '';
+
+            if (!password || !login)
+                return { error: 'Login and password is required' };
+
+            const user = (await this.connection.query('SELECT sub, email, name, role, password FROM account WHERE email = $1', [login]))[0];
+            if (!user)
+                return { error: 'Invalid email' };
+
+            if (user.password === null)
+                return { error: 'User does not uses password auth' };
+
+            if (user.password.startsWith('plain:')) {
+                const password = user.password.substring('plain:'.length);
+                if (password !== request.password)
+                    return { error: 'invalid password' };
+
+                return { jwt: this.generateJwt(user.sub, user.role), user };
+            }
+            return null;
         }
 
         await this.kafka.sendMessage('try unsupported auth type ' + request.type, 'warning');
@@ -240,7 +242,7 @@ export class AppService {
         throw new BadRequestException(`Unsupported type, use ${this.getSupportedAuths().join(', ')}`);
     }
 
-    async callback(code: string): Promise<{ error?: string, jwt?: string, user?: any }> {
+    async callback(code: string): Promise<{ error?: string, jwt?: string, user?: UserResponse }> {
         if (code.length > 20) {
             let tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
                 method: 'POST',
@@ -252,8 +254,7 @@ export class AppService {
                 let error = tokenResponse.status + '';
                 try {
                     error += await tokenResponse.text();
-                }
-                catch (e) {
+                } catch (e) {
                 }
                 await this.kafka.sendMessage('callback error google\n' + error, 'warning');
                 return { error: 'bad code' };
@@ -267,8 +268,7 @@ export class AppService {
                     let error = infoResponse.status + '';
                     try {
                         error += await infoResponse.text();
-                    }
-                    catch (e) {
+                    } catch (e) {
                     }
                     await this.kafka.sendMessage('callback error google\n' + error, 'warning');
 
@@ -285,14 +285,12 @@ export class AppService {
                 }
 
                 return { jwt: this.generateJwt(user.sub, user.role), user };
-            }
-            catch (e) {
+            } catch (e) {
                 console.log(e);
                 await this.kafka.sendMessage('google auth error\n' + e, 'warning');
                 return { error: 'google error' };
             }
-        }
-        else if (code.length < 20) {
+        } else if (code.length < 20) {
             let tokenResponse = await fetch('https://oauth.yandex.ru/token', {
                 method: 'POST',
                 headers: {
@@ -306,8 +304,7 @@ export class AppService {
                 let error = tokenResponse.status + '';
                 try {
                     error += await tokenResponse.text();
-                }
-                catch (e) {
+                } catch (e) {
                 }
                 await this.kafka.sendMessage('callback error yandex\n' + error, 'warning');
 
@@ -322,8 +319,7 @@ export class AppService {
                     let error = infoResponse.status + '';
                     try {
                         error += await infoResponse.text();
-                    }
-                    catch (e) {
+                    } catch (e) {
                     }
                     await this.kafka.sendMessage('callback error yandex\n' + error, 'warning');
 
@@ -340,8 +336,7 @@ export class AppService {
                 }
 
                 return { jwt: this.generateJwt(user.sub, user.role), user };
-            }
-            catch (e) {
+            } catch (e) {
                 console.log(e);
                 await this.kafka.sendMessage('google auth error\n' + e, 'warning');
                 return { error: 'yandex error' };
