@@ -23,6 +23,7 @@ helm uninstall rsoi-auth
 helm uninstall rsoi-payment
 helm uninstall rsoi-person
 helm uninstall rsoi-reservation
+helm uninstall rsoi-logger
 helm uninstall rsoi-gateway
 helm uninstall rsoi-web
 
