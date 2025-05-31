@@ -7,29 +7,54 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     private producer: Producer;
 
     constructor(private kafkaConfig: { brokers: string[] }) {
-        this.kafka = new Kafka({ brokers: this.kafkaConfig.brokers });
-        this.producer = this.kafka.producer();
+        try {
+            console.log('CONNECT TO KAFKA: ' + this.kafkaConfig.brokers.join(', '))
+            this.kafka = new Kafka({ brokers: this.kafkaConfig.brokers });
+            this.producer = this.kafka.producer();
+        }
+        catch (e) {
+        }
     }
 
     async onModuleInit(): Promise<void> {
-        await this.connect();
+        try {
+            await this.connect();
+        }
+        catch (e) {
+        }
     }
 
     async onModuleDestroy(): Promise<void> {
-        await this.disconnect();
+        try {
+            await this.disconnect();
+        }
+        catch (e) {
+        }
     }
 
     async connect() {
-        await this.producer.connect();
+        try {
+            await this.producer.connect();
+        }
+        catch (e) {
+        }
     }
 
     async disconnect() {
-        await this.producer.disconnect();
+        try {
+            await this.producer.disconnect();
+        }
+        catch (e) {
+        }
     }
 
     async sendMessage(message: string, level: string = 'info') {
-        return await this.producer
-            .send({ topic: 'logs', messages: [{ value: JSON.stringify({ service: 'auth', level: level || 'info', message }) }] })
-            .catch(e => console.error(e.message, e));
+        try {
+            await this.producer
+                .send({ topic: 'logs', messages: [{ value: JSON.stringify({ service: 'auth', level: level || 'info', message }) }] })
+                .catch(e => console.error(e.message, e));
+        }
+        catch (e) {
+        }
     }
 }

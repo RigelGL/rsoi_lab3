@@ -1,4 +1,4 @@
-name: rsoi_postgres
+name: rsoi-postgres
 image: postgres
 tag: 17
 port: 5432
@@ -15,4 +15,4 @@ pvc:
   enabled: true
   size: 2Gi
   name: mysql-volume
-  mountPath: /var/lib/mysql
+  mountPath: var/lib/postgresql/data

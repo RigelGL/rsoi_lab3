@@ -14,6 +14,12 @@ spec:
     spec:
       imagePullSecrets:
         - name: rigellab
+      {{- if .Values.waitDb }}
+      initContainers:
+        - name: wait-for-pg-kafka
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z {{ .Values.waitDb }} 5432; do echo waiting for ready...; sleep 5; done; echo ready!' ]
+      {{- end }}
       containers:
         - name: {{ .Values.name }}-container
           image: "{{ .Values.image }}:{{ .Values.tag | default "latest" }}"
@@ -27,6 +33,15 @@ spec:
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.secretEnv }}
+            {{- range .Values.secretEnv }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef:
+                  name: rsoi-secrets
+                  key: {{ . }}
             {{- end }}
             {{- end }}
           {{- if .Values.pvc }}

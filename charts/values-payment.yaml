@@ -1,8 +1,12 @@
-name: rsoi_payment
+name: rsoi-payment
 image: dockerhub.rigellab.ru/rsoi/payment
 port: 8060
+
+waitDb: rsoi-postgres
+
 env:
-  DB_HOST: rsoi_postgres
+  DB_HOST: rsoi-postgres
   DB_NAME: payment
   DB_USER: payment
   DB_PASSWORD: postgres
+  KAFKA: rsoi-kafka:9092

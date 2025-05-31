@@ -2,7 +2,7 @@ import { config } from "dotenv";
 
 import { Pool } from 'pg';
 
-config({ path: `.env` });
+config({ path: ['.env', '.env.secrets'] });
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -14,6 +14,8 @@ import { NestExpressApplication } from "@nestjs/platform-express";
     const port = process.env.APP_PORT || 8080;
     console.log(`Auth runs on PORT ${port}, database: ${process.env.DB_URL}`);
 
+
+    console.log(`USE DB ${process.env.DB_URL}`)
 
     const conn = new Pool({
         connectionString: `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_URL}`,

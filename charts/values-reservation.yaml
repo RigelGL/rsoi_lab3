@@ -1,8 +1,12 @@
-name: rsoi_reservation
+name: rsoi-reservation
 image: dockerhub.rigellab.ru/rsoi/reservation
 port: 8070
+
+waitDb: rsoi-postgres
+
 env:
-  DB_HOST: rsoi_postgres
+  DB_HOST: rsoi-postgres
   DB_NAME: reservation
   DB_USER: reservation
   DB_PASSWORD: postgres
+  KAFKA: rsoi-kafka:9092

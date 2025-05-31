@@ -7,12 +7,17 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaFuture;
 
 public class Main {
     private static KafkaProducer<String, String> producer;
@@ -72,10 +77,22 @@ public class Main {
         if (KAFKA == null) KAFKA = dotEnv.get("KAFKA");
 
         var props = new Properties();
-        props.put("bootstrap.servers", "localhost:9092");
+        props.put("bootstrap.servers", KAFKA);
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         producer = new KafkaProducer<>(props);
+
+        var properties = new Properties();
+        properties.put("bootstrap.servers", KAFKA);
+
+        System.out.println("Checking kafka connection (" + KAFKA + ")");
+        try (var adminClient = AdminClient.create(properties)) {
+            var id = adminClient.describeCluster().clusterId().get();
+            System.out.println("Kafka connected! " + id);
+        }
+        catch (Exception e) {
+            System.err.println("Error Kafka connecting " + e.getMessage());
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> producer.close()));
 

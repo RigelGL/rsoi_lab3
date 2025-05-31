@@ -1,8 +1,12 @@
-name: rsoi_person
+name: rsoi-person
 image: dockerhub.rigellab.ru/rsoi/person
 port: 8050
+
+waitDb: rsoi-postgres
+
 env:
-  DB_HOST: rsoi_postgres
+  DB_HOST: rsoi-postgres
   DB_NAME: person
   DB_USER: person
   DB_PASSWORD: postgres
+  KAFKA: rsoi-kafka:9092

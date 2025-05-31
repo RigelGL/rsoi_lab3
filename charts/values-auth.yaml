@@ -1,0 +1,17 @@
+name: rsoi-auth
+image: dockerhub.rigellab.ru/rsoi/auth
+port: 8030
+waitDb: rsoi-postgres
+env:
+  DB_URL: rsoi-postgres/auth
+  DB_USER: auth
+  DB_PASSWORD: postgres
+  KAFKA: rsoi-kafka:9092
+  OAUTH_REDICRECT: "http://example.com/callback"
+
+secretEnv:
+  - YANDEX_CLIENT_ID
+  - YANDEX_CLIENT_SECRET
+  - GOOGLE_CLIENT_ID
+  - GOOGLE_CLIENT_SECRET
+

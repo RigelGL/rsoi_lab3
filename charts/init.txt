@@ -1,0 +1,9 @@
+kubectl delete secret rigellab
+kubectl create secret docker-registry rigellab --docker-server=https:// --docker-username=a --docker-password=xx
+
+
+ kubectl create secret generic rsoi-secrets \
+     --from-literal=YANDEX_CLIENT_ID=xx \
+     --from-literal=YANDEX_CLIENT_SECRET=x \
+     --from-literal=GOOGLE_CLIENT_ID=xx \
+     --from-literal=GOOGLE_CLIENT_SECRET=x

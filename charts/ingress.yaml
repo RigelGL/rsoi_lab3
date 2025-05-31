@@ -2,28 +2,26 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   ingressClassName: nginx
   rules:
-    - host: myapp.local
+    - host: example.com
       http:
         paths:
           - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: rsoi_gateway
+                name: rsoi-gateway
                 port:
-                  number: 22001
-    - host: myapp.local
+                  number: 8080
+    - host: example.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: rsoi_web
+                name: rsoi-web
                 port:
                   number: 80
