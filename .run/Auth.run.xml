@@ -3,7 +3,7 @@
     <package-json value="$PROJECT_DIR$/auth/package.json" />
     <command value="run" />
     <scripts>
-      <script value="start:dev" />
+      <script value="server" />
     </scripts>
     <node-interpreter value="project" />
     <envs />

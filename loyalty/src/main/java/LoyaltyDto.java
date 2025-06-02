@@ -30,4 +30,15 @@ public class LoyaltyDto {
         discount = rs.getInt("discount");
         reservationCount = rs.getInt("reservation_count");
     }
+
+    @Override
+    public String toString() {
+        return "LoyaltyDto{" +
+               "id=" + id +
+               ", userUid='" + userUid + '\'' +
+               ", status='" + status + '\'' +
+               ", discount=" + discount +
+               ", reservationCount=" + reservationCount +
+               '}';
+    }
 }

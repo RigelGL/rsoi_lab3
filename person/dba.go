@@ -25,41 +25,15 @@ func GetDba() *Dba {
 	return instance
 }
 
-func ConnectDba(host, name, user, password string) {
-	log.Printf("USE DB %v/%v, as %v", host, name, user)
+func ConnectDba(url, user, password string) {
+	log.Printf("USE DB %v, as %v", url, user)
 
 	var err error
-	db, err := sql.Open("postgres", "postgresql://"+user+":"+password+"@"+host+"/"+name+"?sslmode=disable")
+	db, err := sql.Open("postgres", "postgresql://"+user+":"+password+"@"+url+"?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
 	instance = &Dba{db: db}
-}
-
-func CreateDatabase(host, name, user, password string) {
-	db, err := sql.Open("postgres", "postgresql://"+user+":"+password+"@"+host+"?sslmode=disable")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, err := db.Exec("CREATE DATABASE " + name); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("CREATED %v\n", name)
-	db.Close()
-}
-
-func DropDatabase(host, name, user, password string) {
-	db, err := sql.Open("postgres", "postgresql://"+user+":"+password+"@"+host+"?sslmode=disable")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, err := db.Exec("DROP DATABASE " + name); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("DROPPED %v\n", name)
-	db.Close()
 }
 
 func (s Dba) close() {

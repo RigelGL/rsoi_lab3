@@ -18,7 +18,8 @@ public class LoyaltyService {
                 if (rs.next())
                     return new LoyaltyDto(rs);
             }
-        } catch (SQLException ignored) {
+        }
+        catch (SQLException ignored) {
         }
         return null;
     }
@@ -42,7 +43,8 @@ public class LoyaltyService {
                 p.executeUpdate();
                 return true;
             }
-        } catch (SQLException ignored) {
+        }
+        catch (SQLException ignored) {
             ignored.printStackTrace();
         }
         return false;
@@ -59,12 +61,20 @@ public class LoyaltyService {
             loyalty.reservationCount++;
         else if ("dec".equals(type))
             loyalty.reservationCount = Math.max(0, loyalty.reservationCount - 1);
-        // если не изменяем статус
+            // если не изменяем статус
         else if (dbLoyalty != null)
             return true;
 
         loyalty.status = getStatus(loyalty.reservationCount);
         loyalty.discount = getDiscount(loyalty.reservationCount);
+
+        Main.sendLog(
+                "{\"event\":\"updLoyalty\",\"user\":\""
+                + user.replace("\"", "\\\"")
+                + "\",\"status\":\"" + loyalty.status
+                + "\",\"discount\":" + loyalty.discount + "}",
+                "JSON");
+
         return addOrUpdateLoyalty(user, loyalty);
     }
 

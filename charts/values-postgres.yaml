@@ -16,3 +16,4 @@ pvc:
   size: 2Gi
   name: postgres-volume
   mountPath: var/lib/postgresql/data
+  storageClass: keep

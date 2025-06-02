@@ -1,4 +1,9 @@
+rsoi.exe
 .dockerignore
 .env
-person.iml
+Dockerfile
 publish.sh
+test.Dockerfile
+test.http
+test.sh
+person.iml

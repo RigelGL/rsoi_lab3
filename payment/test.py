@@ -7,35 +7,17 @@ import random, string, os
 
 class TestDao(unittest.TestCase):
     dba: Dba = None
-    _database_name = None
 
     @classmethod
     def setUpClass(cls):
         load_dotenv()
+        DB_NAME = os.getenv('DB_NAME')
         DB_HOST = os.getenv('DB_HOST')
         DB_USER = os.getenv('DB_USER')
         DB_PASSWORD = os.getenv('DB_PASSWORD')
 
-        TestDao._database_name = 'payment_test_' + ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
-
-        if not Dba.create_test_database(TestDao._database_name, host=DB_HOST, user=DB_USER, password=DB_PASSWORD):
-            print('Error creating database')
-            return False
-        print('Created database {}'.format(TestDao._database_name))
-
-        TestDao.dba = Dba(name=TestDao._database_name, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+        TestDao.dba = Dba(name=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
         TestDao.dba.init_database()
-
-    @classmethod
-    def tearDownClass(cls):
-        DB_HOST = os.getenv('DB_HOST')
-        DB_USER = os.getenv('DB_USER')
-        DB_PASSWORD = os.getenv('DB_PASSWORD')
-
-        if not Dba.drop_test_database(TestDao._database_name, host=DB_HOST, user=DB_USER, password=DB_PASSWORD):
-            print('Error drop database')
-        else:
-            print('Dropped database {}'.format(TestDao._database_name))
 
     def test_not_found(self):
         self.assertEqual(TestDao.dba.get_payment('unef'), None, 'Should be None')

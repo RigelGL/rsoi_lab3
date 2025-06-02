@@ -1,6 +1,9 @@
 node_modules
+.dockerignore
 .env
 Dockerfile
-.dockerignore
-reservation.iml
 publish.sh
+test.Dockerfile
+test.http
+test.sh
+reservation.iml

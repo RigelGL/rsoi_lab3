@@ -20,13 +20,15 @@ func closeProducer() {
 
 // init is invoked before main()
 func init() {
+	log.Println(os.Getenv("DB_URL"))
+
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
 }
 
 func main() {
-	ConnectDba(os.Getenv("DB_HOST"), os.Getenv("DB_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
+	ConnectDba(os.Getenv("DB_URL"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"))
 	GetDba().initTables()
 
 	writer = &kafka.Writer{

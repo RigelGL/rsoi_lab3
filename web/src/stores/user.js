@@ -22,7 +22,7 @@ export const useUserStore = defineStore('user', {
         logout() {
             this.user = undefined;
             this.role = null;
-            console.log('logout');
+            localStorage.removeItem('token');
         },
 
         callback(code) {
@@ -41,8 +41,6 @@ export const useUserStore = defineStore('user', {
                     this.user = e.data;
                     this.role = parseJwt(localStorage.getItem('token'))?.role;
                 }
-                else if (e.status === 401 || e.status === 403)
-                    this.logout();
                 resolve(e);
             }));
         },

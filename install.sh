@@ -15,6 +15,9 @@ cd ./charts
 echo "Install ingress..."
 minikube addons enable ingress
 
+echo "Creating keep storageclass"
+kubectl apply -f storageclass-keep.yaml
+
 echo "Remove old..."
 helm uninstall rsoi-postgres
 helm uninstall rsoi-kafka

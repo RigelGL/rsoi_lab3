@@ -3,40 +3,6 @@ from psycopg2 import pool
 
 
 class Dba:
-    @classmethod
-    def create_test_database(cls, name, host, user, password):
-        try:
-            conn = psycopg2.connect(user=user, password=password, host=host)
-            conn.autocommit = True
-            c = conn.cursor()
-            c.execute('CREATE DATABASE {}'.format(name))
-
-            f = open('res/init.sql', 'r', encoding='utf-8')
-            sql = f.read()
-            f.close()
-            c.execute(sql)
-            c.close()
-            conn.commit()
-            conn.close()
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
-    @classmethod
-    def drop_test_database(cls, name, host, user, password):
-        try:
-            conn = psycopg2.connect(user=user, password=password, host=host)
-            conn.autocommit = True
-            c = conn.cursor()
-            c.execute('DROP DATABASE IF EXISTS {}'.format(name))
-            c.close()
-            conn.close()
-            return True
-        except Exception as e:
-            print(e)
-            return False
-
     def __init__(self, name, host, user, password):
         try:
             self.pool = psycopg2.pool.SimpleConnectionPool(1, 10, dbname=name, user=user, password=password, host=host)

@@ -4,12 +4,14 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Values.name }}-pvc
+  annotations:
+    "helm.sh/resource-policy": keep
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: {{ .Values.pvc.size }}
-  storageClassName: standard
+  storageClassName: {{ .Values.pvc.storageClass | default "standard" }}
 {{ end -}}
 {{- end -}}

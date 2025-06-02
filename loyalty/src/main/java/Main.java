@@ -7,22 +7,20 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.KafkaFuture;
 
 public class Main {
-    private static KafkaProducer<String, String> producer;
+    public static KafkaProducer<String, String> producer;
 
     public static void sendLog(String message, String level) {
+        if (producer == null)
+            return;
         producer.send(new ProducerRecord<>("logs",
                 "{" +
                 "\"service\":\"loyalty\"," +

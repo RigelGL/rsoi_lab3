@@ -14,8 +14,9 @@ func Test_CreatePerson(t *testing.T) {
 	var age int32 = 10
 	var work = "No"
 	var address = "City"
+	var id = "test-id"
 
-	id, err := GetDba().addNewPerson(&model.PersonRequest{Name: &name, Age: &age, Work: &work, Address: &address})
+	id, err := GetDba().addNewPerson(&model.PersonRequest{Id: &id, Name: &name, Age: &age, Work: &work, Address: &address})
 
 	personId = id
 
@@ -34,7 +35,7 @@ func Test_GetPerson(t *testing.T) {
 	res, err := GetDba().findPersonById(personId)
 
 	assert.Equal(t, 0, err.code)
-	assert.Equal(t, personId, res.Id)
+	assert.Equal(t, personId, *res.Id)
 	assert.Equal(t, "User", *res.Name)
 	assert.Equal(t, int32(10), *res.Age)
 	assert.Equal(t, "No", *res.Work)
@@ -51,7 +52,7 @@ func Test_UpdatePerson(t *testing.T) {
 
 	res, err := GetDba().findPersonById(personId)
 	assert.Equal(t, 0, err.code)
-	assert.Equal(t, personId, res.Id)
+	assert.Equal(t, personId, *res.Id)
 	assert.Equal(t, "User", *res.Name)
 	assert.Equal(t, "NoUpd", *res.Work)
 	assert.Equal(t, "CityUpd", *res.Address)

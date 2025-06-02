@@ -11,11 +11,12 @@ import { AppService } from "./app.service";
 import { AuthThirdService } from "./third/auth.third.service";
 import { AuthMiddleware } from "./middleware";
 import { LoggerThirdService } from "./third/logger.third.service";
+import { TestController } from "./test.controller";
 
 
 @Module({
     imports: [ConfigModule.forRoot({ envFilePath: '.env' })],
-    controllers: [AppController, ApiController],
+    controllers: [AppController, ApiController, TestController],
     providers: [
         ApiService,
         AppService,

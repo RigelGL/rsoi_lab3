@@ -316,21 +316,13 @@ public class JDBCConnectionPool {
 
     private void initializePool() {
         try {
-            var base = "jdbc:postgresql://" + host + "/";
-            try (var createDbConn = DriverManager.getConnection(base, username, password)) {
-                try (var statement = createDbConn.prepareStatement("CREATE DATABASE " + name)) {
-                    statement.execute();
-                    System.out.println("new db " + name + " created");
-                }
-            } catch (Exception ignored) {
-            }
-
             for (int i = 0; i < maxConnections; i++) {
-                var conn = DriverManager.getConnection(base + name, username, password);
+                var conn = DriverManager.getConnection("jdbc:postgresql://" + host + "/" + name, username, password);
                 pool.offer(new PoolConnectionWrapper(conn, this));
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при инициализации пула соединений: " + e.getMessage());
+            System.exit(1);
         }
     }
 

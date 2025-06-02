@@ -1,5 +1,9 @@
 node_modules
 .dockerignore
+.env
 Dockerfile
-web.iml
 publish.sh
+test.Dockerfile
+test.http
+test.sh
+web.iml

@@ -11,7 +11,7 @@ export class AppController {
         return await this.appService.find(JSON.parse(query || '{}'));
     }
 
-    @Get('/manager/health')
+    @Get('/manage/health')
     async health() {
         return 'OK';
     }

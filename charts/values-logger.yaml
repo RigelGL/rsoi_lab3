@@ -1,10 +1,10 @@
 name: rsoi-logger
 image: dockerhub.rigellab.ru/rsoi/logger
-port: 8020
+port: 80
 waitDb: rsoi-postgres
 env:
   DB_URL: rsoi-postgres/logger
   DB_USER: logger
   DB_PASSWORD: postgres
   KAFKA: rsoi-kafka:9092
-  JWKS: rsoi-auth:8030/well-known
+  JWKS: http://rsoi-auth/well-known

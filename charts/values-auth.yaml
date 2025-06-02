@@ -1,6 +1,6 @@
 name: rsoi-auth
 image: dockerhub.rigellab.ru/rsoi/auth
-port: 8030
+port: 80
 waitDb: rsoi-postgres
 env:
   DB_URL: rsoi-postgres/auth
@@ -8,6 +8,7 @@ env:
   DB_PASSWORD: postgres
   JWT_LIFETIME: 2592000
   KAFKA: rsoi-kafka:9092
+  KEYS_PATH: /var/auth-keys
   OAUTH_REDICRECT: "http://example.com/callback"
 
 secretEnv:
@@ -16,3 +17,9 @@ secretEnv:
   - GOOGLE_CLIENT_ID
   - GOOGLE_CLIENT_SECRET
 
+pvc:
+  enabled: true
+  size: 32Ki
+  name: auth-volume
+  mountPath: var/auth-keys
+  storageClass: keep

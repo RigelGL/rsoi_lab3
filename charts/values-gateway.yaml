@@ -1,13 +1,13 @@
 name: rsoi-gateway
 image: dockerhub.rigellab.ru/rsoi/gateway
-port: 8080
+port: 80
 env:
-  GATEWAY_PORT: 8080
-  LOGGER_URL: http://rsoi-logger:8020
-  AUTH_URL: http://rsoi-auth:8030
-  PERSON_URL: http://rsoi-person:8040
-  LOYALTY_URL: http://rsoi-loyalty:8050
-  PAYMENT_URL: http://rsoi-payment:8060
-  RESERVATION_URL: http://rsoi-reservation:8070
+  GATEWAY_PORT: 80
+  LOGGER_URL: http://rsoi-logger
+  AUTH_URL: http://rsoi-auth
+  PERSON_URL: http://rsoi-person
+  LOYALTY_URL: http://rsoi-loyalty
+  PAYMENT_URL: http://rsoi-payment
+  RESERVATION_URL: http://rsoi-reservation
   KAFKA: rsoi-kafka:9092
-  JWKS: rsoi-auth:8030/well-known
+  JWKS: http://rsoi-auth/well-known

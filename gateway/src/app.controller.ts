@@ -32,7 +32,7 @@ export class AppController {
     }
 
     @Get('/api/v1/callback')
-    async callback(@Query('code') code): Promise<any> {
+    async callback(@Query('code') code: string): Promise<any> {
         const result = await this.service.callback(code);
 
         if (result.failed || !result.result)

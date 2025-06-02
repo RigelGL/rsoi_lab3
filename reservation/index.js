@@ -16,6 +16,7 @@ async function sendLog(message, level = 'info') {
 process.on('exit', async () => await producer.disconnect());
 
 (async function () {
+    console.log(`using: ${process.env.DB_HOST}/${process.env.DB_NAME} as ${process.env.DB_USER}`)
     const pool = new postgresql.Pool({
         user: process.env.DB_USER,
         database: process.env.DB_NAME,

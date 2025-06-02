@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { DataSource, QueryRunner } from "typeorm";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { AuthRequest } from "./dto";
@@ -19,20 +19,24 @@ type UserResponse = {
 }
 
 @Injectable()
-export class AppService {
-    private readonly yandex: Oauth;
-    private readonly google: Oauth;
-    private readonly OAUTH_REDIRECT: string;
-    private readonly JWT_LIFETIME: number;
+export class AppService implements OnModuleInit {
+    private yandex: Oauth;
+    private google: Oauth;
+    private OAUTH_REDIRECT: string;
+    private JWT_LIFETIME: number;
 
-    private readonly JWK_PRIVATE: KeyObject;
-    private readonly JWK_PUBLIC: KeyObject;
-    private readonly JWK_PUBLIC_MOD: string;
-    private readonly JWK_PUBLIC_EXP: string;
+    private JWK_PRIVATE: KeyObject;
+    private JWK_PUBLIC: KeyObject;
+    private JWK_PUBLIC_MOD: string;
+    private JWK_PUBLIC_EXP: string;
 
-    private readonly JWT_HEADER: string;
+    private JWT_HEADER: string;
 
     constructor(@InjectDataSource() private readonly connection: DataSource, private readonly kafka: KafkaService) {
+
+    }
+
+    async onModuleInit() {
         if (process.env.YANDEX_CLIENT_ID && process.env.YANDEX_CLIENT_SECRET)
             this.yandex = { clientId: process.env.YANDEX_CLIENT_ID, clientSecret: process.env.YANDEX_CLIENT_SECRET };
 
@@ -43,23 +47,26 @@ export class AppService {
         this.JWT_LIFETIME = Math.max(60, +(process.env.JWT_LIFETIME || 0));
 
         try {
-            const publicKeyPem = fs.readFileSync(__dirname + '/keys/public_key.pem', 'utf-8');
+            const keyFolder = process.env.KEYS_PATH || (__dirname + '/keys');
+
+            const publicKeyPem = fs.readFileSync(keyFolder + '/public_key.pem', 'utf-8');
             this.JWK_PUBLIC = createPublicKey(publicKeyPem);
             const jwk = this.JWK_PUBLIC.export({ format: 'jwk' });
             this.JWK_PUBLIC_MOD = jwk.n || '';
             this.JWK_PUBLIC_EXP = jwk.e || '';
 
-            const privateKeyPem = fs.readFileSync(__dirname + '/keys/private_key.pem', 'utf-8');
+            const privateKeyPem = fs.readFileSync(keyFolder + '/private_key.pem', 'utf-8');
             this.JWK_PRIVATE = createPrivateKey(privateKeyPem);
 
             this.JWT_HEADER = Buffer.from('{"alg":"RS256","typ":"JWT"}').toString('base64url');
 
             console.log('RSA KEYS LOADED');
-            kafka.sendMessage('RSA KEYS LOADED');
-        } catch (error) {
+            await this.kafka.sendMessage('RSA KEYS LOADED');
+        }
+        catch (error) {
             console.log('CANT LOAD KEYS!');
             console.log(error);
-            kafka.sendMessage('CANT LOAD KEYS!\n' + error, 'severe')
+            await this.kafka.sendMessage('CANT LOAD KEYS!\n' + error, 'severe')
         }
 
         console.log(this.yandex ? 'USING YANDEX AUTH' : 'YANDEX AUTH NOT USED');
@@ -114,7 +121,8 @@ export class AppService {
 
                     user = (await runner.query('SELECT sub, email, name, role FROM account WHERE google_id = $1', [providerId]))[0];
                 }
-            } else if (provider === 'yandex') {
+            }
+            else if (provider === 'yandex') {
                 user = (await runner.query('SELECT sub, email, name, role FROM account WHERE yandex_id = $1 OR email = $2', [providerId, email]))[0];
                 if (!user || user?.email !== email || user?.name !== name) {
                     if (!user)
@@ -128,12 +136,15 @@ export class AppService {
 
             await runner.query('COMMIT');
             return user;
-        } catch (error) {
+        }
+        catch (error) {
             console.error(error);
-        } finally {
+        }
+        finally {
             try {
                 runner?.release();
-            } catch (error) {
+            }
+            catch (error) {
             }
         }
         return null;
@@ -191,6 +202,15 @@ export class AppService {
         return payload;
     }
 
+    private sanitizeUser(user: UserResponse) {
+        return {
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            sub: user.sub,
+        }
+    }
+
     async authorize(request: AuthRequest): Promise<null | { redirectUrl?: string, jwt?: string, user?: UserResponse, error?: string }> {
         if (request.type === 'yandex') {
             if (!this.yandex)
@@ -232,7 +252,7 @@ export class AppService {
                 if (password !== request.password)
                     return { error: 'invalid password' };
 
-                return { jwt: this.generateJwt(user.sub, user.role), user };
+                return { jwt: this.generateJwt(user.sub, user.role), user: this.sanitizeUser(user) };
             }
             return null;
         }
@@ -254,7 +274,8 @@ export class AppService {
                 let error = tokenResponse.status + '';
                 try {
                     error += await tokenResponse.text();
-                } catch (e) {
+                }
+                catch (e) {
                 }
                 await this.kafka.sendMessage('callback error google\n' + error, 'warning');
                 return { error: 'bad code' };
@@ -268,7 +289,8 @@ export class AppService {
                     let error = infoResponse.status + '';
                     try {
                         error += await infoResponse.text();
-                    } catch (e) {
+                    }
+                    catch (e) {
                     }
                     await this.kafka.sendMessage('callback error google\n' + error, 'warning');
 
@@ -284,13 +306,15 @@ export class AppService {
                     return { error: 'bad user' };
                 }
 
-                return { jwt: this.generateJwt(user.sub, user.role), user };
-            } catch (e) {
+                return { jwt: this.generateJwt(user.sub, user.role), user: this.sanitizeUser(user) };
+            }
+            catch (e) {
                 console.log(e);
                 await this.kafka.sendMessage('google auth error\n' + e, 'warning');
                 return { error: 'google error' };
             }
-        } else if (code.length < 20) {
+        }
+        else if (code.length < 20) {
             let tokenResponse = await fetch('https://oauth.yandex.ru/token', {
                 method: 'POST',
                 headers: {
@@ -304,7 +328,8 @@ export class AppService {
                 let error = tokenResponse.status + '';
                 try {
                     error += await tokenResponse.text();
-                } catch (e) {
+                }
+                catch (e) {
                 }
                 await this.kafka.sendMessage('callback error yandex\n' + error, 'warning');
 
@@ -319,7 +344,8 @@ export class AppService {
                     let error = infoResponse.status + '';
                     try {
                         error += await infoResponse.text();
-                    } catch (e) {
+                    }
+                    catch (e) {
                     }
                     await this.kafka.sendMessage('callback error yandex\n' + error, 'warning');
 
@@ -335,8 +361,9 @@ export class AppService {
                     return { error: 'bad user' };
                 }
 
-                return { jwt: this.generateJwt(user.sub, user.role), user };
-            } catch (e) {
+                return { jwt: this.generateJwt(user.sub, user.role), user: this.sanitizeUser(user) };
+            }
+            catch (e) {
                 console.log(e);
                 await this.kafka.sendMessage('google auth error\n' + e, 'warning');
                 return { error: 'yandex error' };

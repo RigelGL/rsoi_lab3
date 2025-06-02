@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Headers, HttpCode, Post, Qu
 import { AppService } from './app.service';
 import { AuthRequest } from "./dto";
 
-@Controller()
+@Controller('/')
 export class AppController {
     constructor(private readonly appService: AppService) {
     }
@@ -64,12 +64,12 @@ export class AppController {
 </html>`;
     }
 
-    @Get('/well-known')
+    @Get('well-known')
     async getJwks() {
         return this.appService.getJWKs();
     }
 
-    @Post('/authorize')
+    @Post('authorize')
     @HttpCode(200)
     async provideAuth(@Body() body: AuthRequest) {
         const res = await this.appService.authorize(body);
@@ -78,7 +78,7 @@ export class AppController {
         return res;
     }
 
-    @Post('/verify')
+    @Post('verify')
     @HttpCode(200)
     async verifyToken(@Body() body: { token: string }) {
         try {
@@ -90,7 +90,7 @@ export class AppController {
         }
     }
 
-    @Get('/callback')
+    @Get('callback')
     async redirectedAuth(@Query('code') code: string) {
         const res = await this.appService.callback(code);
         if(!res || res.error)
@@ -98,7 +98,7 @@ export class AppController {
         return res;
     }
 
-    @Get('/manage/health')
+    @Get('manage/health')
     getHello() {
         return 'OK';
     }

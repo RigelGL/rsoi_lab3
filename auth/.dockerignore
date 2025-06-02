@@ -3,6 +3,8 @@ node_modules
 .dockerignore
 .env
 Dockerfile
-auth.iml
 publish.sh
-auth.http
+test.Dockerfile
+test.http
+test.sh
+auth.iml

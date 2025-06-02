@@ -3,51 +3,35 @@ import { expect } from 'chai';
 import supertest from 'supertest';
 import { HotelDba } from '../Dba.js';
 import { createApp } from '../app.js';
+import { Kafka } from "kafkajs";
 
 
 describe('App tests', () => {
-    const database = `test_reservation_${Math.random().toString(36).substring(2)}`;
     let app;
     let dba;
 
     before(async () => {
-        const client = new pg.Client({ user: process.env.DB_USER, password: process.env.DB_PASSWORD, host: process.env.DB_HOST, port: 5432 });
-        try {
-            await client.connect();
-            await client.query(`CREATE DATABASE ${database}`);
-        }
-        catch (e) {
-            console.log(e);
-        }
-        finally {
-            console.log(`DB ${database} created`);
-            await client.end();
-        }
+        console.log(`using: ${process.env.DB_HOST}/${process.env.DB_NAME} as ${process.env.DB_USER}`)
+        const pool = new pg.Pool({
+            user: process.env.DB_USER,
+            database: process.env.DB_NAME,
+            password: process.env.DB_PASSWORD,
+            host: process.env.DB_HOST,
+            port: 5432
+        });
 
-        const pool = new pg.Pool({ user: process.env.DB_USER, database, password: process.env.DB_PASSWORD, host: process.env.DB_HOST, port: 5432 });
+        const kafka = new Kafka({ brokers: [process.env.KAFKA] });
+        const producer = kafka.producer();
+
+        async function sendLog(message, level = 'info') {
+            await producer.send({ topic: 'logs', messages: [{ value: JSON.stringify({ service: 'reservation', level: level || 'info', message }) }] });
+        }
 
         dba = new HotelDba(pool);
         await dba.initTables();
 
-        app = createApp(dba);
+        app = createApp(dba, sendLog);
     });
-
-    after(async () => {
-        const client = new pg.Client({ user: process.env.DB_USER, password: process.env.DB_PASSWORD, host: process.env.DB_HOST, port: 5432 });
-        try {
-            await dba.close();
-            await client.connect();
-            await client.query(`DROP DATABASE ${database}`);
-        }
-        catch (e) {
-            console.log(e)
-        }
-        finally {
-            console.log(`DB ${database} cleared`);
-            await client.end();
-        }
-    });
-
 
     it('health check', async () => {
         const res = await supertest(app).get('/manage/health');
@@ -82,7 +66,7 @@ describe('App tests', () => {
 
     let reservationUid;
     it('reserve hotel', async () => {
-        const reservation = { userName: 'username', paymentUid: '42e0018b-54ac-4d96-888a-bdebf1f664c3', hotelUid, startDate: '2024-10-12', endDate: '2024-10-15' };
+        const reservation = { userUid: 'unique-person', paymentUid: '42e0018b-54ac-4d96-888a-bdebf1f664c3', hotelUid, startDate: '2024-10-12', endDate: '2024-10-15' };
         const res = await supertest(app)
             .post('/reservation')
             .set('Content-Type', 'application/json')

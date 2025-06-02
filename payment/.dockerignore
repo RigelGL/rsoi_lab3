@@ -1,6 +1,11 @@
 /.venv
-Dockerfile
-test.http
+__pycache__
 .dockerignore
 .env
+docker-compose.yaml
+Dockerfile
+publish.sh
+test.Dockerfile
+test.http
+test.sh
 payment.iml

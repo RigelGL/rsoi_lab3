@@ -1,6 +1,10 @@
+dist
 node_modules
-Dockerfile
 .dockerignore
+.env
+Dockerfile
 publish.sh
-logger.iml
+test.Dockerfile
 test.http
+test.sh
+logger.iml

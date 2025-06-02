@@ -1,0 +1,182 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U test" ]
+      interval: 1s
+      retries: 30
+    volumes:
+      - ./postgres/:/docker-entrypoint-initdb.d/
+
+  kafka:
+    image: apache/kafka:latest
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'HOST://localhost:9093,DOCKER://kafka:9092'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:9091'
+      KAFKA_LISTENERS: 'CONTROLLER://localhost:9091,HOST://0.0.0.0:9093,DOCKER://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'DOCKER'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: '4L6g3nShT-eMCtK--X86sw'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    healthcheck:
+      test: nc -z localhost 9092 || exit -1
+      interval: 2s
+      retries: 30
+
+  gateway:
+    build:
+      context: gateway/
+      dockerfile: Dockerfile
+    container_name: gateway
+    restart: on-failure
+    environment:
+      GATEWAY_PORT: 8080
+      LOGGER_URL: http://logger:8020
+      AUTH_URL: http://auth:8030
+      PERSON_URL: http://person:8040
+      LOYALTY_URL: http://loyalty:8050
+      PAYMENT_URL: http://payment:8060
+      RESERVATION_URL: http://reservation:8070
+      KAFKA: kafka:9092
+    depends_on:
+      - logger
+      - auth
+      - person
+      - loyalty
+      - payment
+      - reservation
+      - kafka
+    ports:
+      - "8080:8080"
+
+  logger:
+    build:
+      context: logger/
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: postgres
+      KAFKA: kafka:9092
+      DB_URL: postgres/logger
+      DB_NAME: logger
+      APP_PORT: 8020
+    ports:
+      - "8020:8020"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  auth:
+    build:
+      context: auth/
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: postgres
+      KAFKA: kafka:9092
+      DB_URL: postgres/auth
+      DB_NAME: auth
+      APP_PORT: 8030
+    ports:
+      - "8030:8030"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  person:
+    build:
+      context: person/
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: postgres
+      KAFKA: kafka:9092
+      DB_URL: postgres/person
+      DB_NAME: person
+      APP_PORT: 8040
+    ports:
+      - "8040:8040"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  loyalty:
+    build:
+      context: loyalty/
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: postgres
+      KAFKA: kafka:9092
+      DB_URL: postgres/loyalty
+      DB_NAME: loyalty
+      APP_PORT: 8050
+    ports:
+      - "8050:8050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  payment:
+    build:
+      context: payment/
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: postgres
+      KAFKA: kafka:9092
+      DB_URL: postgres/payment
+      DB_NAME: payment
+      APP_PORT: 8060
+    ports:
+      - "8060:8060"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  reservation:
+    build:
+      context: reservation/
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_HOST: postgres
+      KAFKA: kafka:9092
+      DB_URL: postgres/reservation
+      DB_NAME: reservation
+      APP_PORT: 8070
+    ports:
+      - "8070:8070"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy

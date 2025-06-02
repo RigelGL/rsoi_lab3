@@ -1,8 +1,11 @@
-.env
-.dockerignore
+dist
 node_modules
 coverage
-dist
+.env
+.dockerignore
 Dockerfile
-gateway.iml
 publish.sh
+test.Dockerfile
+test.http
+test.sh
+gateway.iml
