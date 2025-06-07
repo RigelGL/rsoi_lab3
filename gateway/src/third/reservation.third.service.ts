@@ -53,7 +53,8 @@ export class ReservationThirdService extends Healthy {
             })
         );
 
-        if (wrapper.failed || wrapper.result?.status !== 200) return null;
+        if (wrapper.failed || wrapper.result?.status !== 200)
+            return null;
         return await wrapper.result.json();
     }
 

@@ -98,9 +98,8 @@ export class ApiService {
         }
         const deltaDays = (+end - +start) / 86400_000 + 1;
 
-        const prisePerDay = hotel.price;
-        const coefficient = 1 - loyaltyWrapper.result.discount / 100;
-        const resultPrice = Math.ceil(deltaDays * prisePerDay * coefficient);
+        const prisePerDay = Math.ceil(hotel.price * (1 - loyaltyWrapper.result.discount / 100));
+        const resultPrice = deltaDays * prisePerDay;
 
         const payment = await this.payment.addPayment(resultPrice);
 

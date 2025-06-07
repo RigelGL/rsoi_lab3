@@ -18,7 +18,8 @@
                     </div>
                 </div>
 
-                <v-btn :to="`/reservation/${reservation.reservationUid}`" class="mt-4" color="primary" text="К бронированию"/>
+                <v-btn :to="`/reservation/${reservation.reservationUid}`"
+                       class="mt-4" color="primary" text="К бронированию" :variant="reservation?.payment?.status === 'PAID' ? 'elevated' : 'outlined'"/>
             </v-card>
         </div>
     </div>

@@ -22,4 +22,4 @@ pvc:
   size: 32Ki
   name: auth-volume
   mountPath: var/auth-keys
-  storageClass: keep
+#  storageClass: keep

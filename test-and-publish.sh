@@ -32,7 +32,7 @@ if [ "$all_tests_passed" = true ]; then
         printf "ok\n"
     else
         echo "$output"
-        printf "failed\nErrors in E2E tests!"
+        printf "failed\nErrors in E2E tests!\n"
         exit 1
     fi
 

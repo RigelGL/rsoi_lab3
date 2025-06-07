@@ -18,7 +18,7 @@
                 <v-card v-if="startDate && endDate && +endDate >= +startDate && !!user.loyalty" class="pa-4 mt-7" elevation="0" style="width: 250px">
                     <div style="font-size: 20px">К оплате</div>
                     <div style="font-size: 24px" class="mt-2">
-                        {{ ((+endDate - +startDate) / 86400000 + 1) * hotel.price * (1 - (user.loyalty.discount || 0) / 100) }} р
+                        {{ ((+endDate - +startDate) / 86400000 + 1) * Math.ceil(hotel.price * (1 - user?.loyalty?.discount / 100)) }} р
                     </div>
                     <v-btn @click="confirm()" variant="flat" color="primary" size="large" class="mt-4" :loading="loading">Забронировать</v-btn>
                 </v-card>

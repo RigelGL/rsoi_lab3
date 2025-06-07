@@ -25,7 +25,7 @@
                     </td>
                     <td style="width: 160px" class="pt-2">
                         <v-combobox v-model="level" label="Тип" variant="outlined" density="compact"
-                                    :items="[null, 'info', 'warning', 'error']"/>
+                                    :items="[null, 'info', 'warning', 'error', 'JSON']"/>
                     </td>
                     <td class="pt-2">
                         <v-text-field v-model="message" label="Сообщение" clearable variant="outlined" density="compact"/>

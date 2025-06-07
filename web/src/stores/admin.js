@@ -3,6 +3,9 @@ import api from '../axios.js'
 
 export const useAdminStore = defineStore('admin', {
     actions: {
+        addHotel(data) {
+            return api.post('hotels', data);
+        },
         getHotels(page, limit, search) {
             return api.get('hotels?page=' + page + '&limit=' + limit + '&search=' + search);
         },

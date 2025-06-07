@@ -5,14 +5,13 @@ import {
     InternalServerErrorException,
     Post,
     Query,
-    Headers,
     NotFoundException,
     HttpCode,
     Delete,
     Param,
     BadGatewayException,
     ServiceUnavailableException,
-    Req, ForbiddenException, Patch, GoneException
+    Req, ForbiddenException, Patch
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiService } from './api.service';
@@ -20,7 +19,7 @@ import { PersonThirdService } from "../third/person.third.service";
 import { PaymentThirdService } from "../third/payment.third.service";
 import { LoyaltyThirdService } from "../third/loyalty.third.service";
 import { ReservationThirdService } from "../third/reservation.third.service";
-import { CreateReservationRequest, PersonRequest } from "./dto";
+import { CreateReservationRequest, HotelInfo, PersonRequest } from "./dto";
 import { CreateReservationWrapper } from "./wrapper";
 import { LoggerThirdService } from "../third/logger.third.service";
 
@@ -70,7 +69,8 @@ export class ApiController {
     @Get('hotels')
     async getHotels(@Query() query: { page: number, limit: number, search: string }) {
         const hotels = await this.reservation.getHotels(+query.page || 1, +query.limit || 20, query.search);
-        if (!hotels) throw new InternalServerErrorException();
+        if (!hotels)
+            throw new InternalServerErrorException();
         return hotels;
     }
 
@@ -167,6 +167,12 @@ export class ApiController {
         return await this.service.getReservations({});
     }
 
+    @Post('hotels')
+    async addHotel(@Req() req: Request, @Body() body: HotelInfo) {
+        if (req.role !== 'admin')
+            throw new ForbiddenException();
+        return await this.reservation.addHotel(body);
+    }
 
     // ADMIN KAFKA
     @Get('/logs')
