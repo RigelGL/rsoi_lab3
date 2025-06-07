@@ -5,7 +5,7 @@ port: 80
 waitDb: rsoi-postgres
 
 env:
-  DB_URL: postgres/person
+  DB_URL: rsoi-postgres/person
   DB_USER: person
   DB_PASSWORD: postgres
   KAFKA: rsoi-kafka:9092
