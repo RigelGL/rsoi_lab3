@@ -59,7 +59,7 @@ export class ApiService {
 
         user.reservations = await this.getMyReservations(userUid) || [];
         const loyaltyWrapper = (await this.loyalty.getLoyaltyForUser(userUid));
-        user.loyalty = loyaltyWrapper.failed ? {} : (loyaltyWrapper.result || this.loyalty.getDefaultFallback());
+        user.loyalty = loyaltyWrapper.result;
 
         return user;
     }

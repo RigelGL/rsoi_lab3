@@ -1,0 +1,89 @@
+@startuml
+'Получение информации о пользователе
+skinparam responseMessageBelowArrow true
+
+actor User as user
+
+participant Gateway as gw
+participant Person as pe
+participant Reservation as re
+participant Payment as pa
+participant Loyalty as lo
+
+user -> gw: /api/v1/me
+gw -> pe: /api/v1/persons/<userId>
+gw <- pe: PersonInfo (JSON)
+gw -> re: /reservations?s={"userUid":<userId>}
+gw <- re: ReservationInfo[] (JSON)
+gw -> pa: /payments?uids=<reservations uids>
+gw <- pa: PaymentInfo[] (JSON)
+gw -> lo: /loyalty?userUid=<userId>
+gw <- lo: LoyaltyInfo (JSON)
+user <- gw: user (JSON)
+
+@enduml
+
+
+@startuml
+'Поиск отелей
+skinparam responseMessageBelowArrow true
+
+actor User as user
+
+participant Gateway as gw
+participant Reservation as re
+
+user -> gw: /api/v1/hotels?page=&limit=&search=
+gw -> re: /hotels?page=&limit=&search=
+gw <- re: HotelInfo[] (JSON)
+user <- gw: HotelInfo[] (JSON)
+
+@enduml
+
+@startuml
+'Бронирование отеля
+skinparam responseMessageBelowArrow true
+
+actor User as user
+
+participant Gateway as gw
+participant Person as pe
+participant Reservation as re
+participant Payment as pa
+participant Loyalty as lo
+
+user -> gw: POST /api/v1/reservations\n{hotelUid, startDate, endDate}
+gw -> re: /hotel/<hotelUid>
+gw <- re: hotel
+gw -> lo: /loyalty?userUid=<userId>
+gw -> pa: POST /payment\n{price}
+gw <- pa: PaymentInfo (JSON)
+gw -> re: POST /reservation\n{userUid, hotelUid, paymentUid,\nstartDate, endDate}
+gw <- re: ReservationInfo (JSON)
+gw -> lo: /update?userUid=<userId>&type=inc
+user <- gw: CreateReservationResponse (JSON)
+
+@enduml
+
+@startuml
+'Отмена бронирования
+skinparam responseMessageBelowArrow true
+
+actor User as user
+
+participant Gateway as gw
+participant Person as pe
+participant Reservation as re
+participant Payment as pa
+participant Loyalty as lo
+
+user -> gw: DELETE /api/v1/reservations/<reservationUid>
+gw -> re: /reservations?s={userUid,reservationUid}
+gw <- re: ReservationInfo (JSON)
+gw -> re: DELETE /reservation/<reservationUid>
+gw -> pa: DELETE /payment/paymentUid
+gw <- pa: PaymentInfo (JSON)
+gw -> lo: /update?userUid=<userId>&type=dec
+user <- gw: OK
+
+@enduml
