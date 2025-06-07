@@ -14,7 +14,7 @@ spec:
               service:
                 name: rsoi-gateway
                 port:
-                  number: 8080
+                  number: 80
     - host: example.com
       http:
         paths:
