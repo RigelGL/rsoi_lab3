@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Healthy } from "./Healthy";
+import { createPublicKey } from "crypto";
 
 @Injectable()
 export class AuthThirdService extends Healthy {
@@ -24,8 +25,7 @@ export class AuthThirdService extends Healthy {
         if (wrapper.failed || wrapper.result?.status !== 200) {
             try {
                 return { failed: true, result: await wrapper.result.json() };
-            }
-            catch (e) {
+            } catch (e) {
                 console.log(e);
                 return { failed: true, result: null };
             }
@@ -39,8 +39,7 @@ export class AuthThirdService extends Healthy {
         if (wrapper.failed || wrapper.result?.status !== 200) {
             try {
                 return { failed: true, result: await wrapper.result.json() };
-            }
-            catch (e) {
+            } catch (e) {
                 console.log(e);
                 return { failed: true, result: null };
             }
@@ -61,8 +60,7 @@ export class AuthThirdService extends Healthy {
 
         try {
             return { failed: false, result: await wrapper.result.json() };
-        }
-        catch (e) {
+        } catch (e) {
             console.log(e);
             return { failed: true, result: null };
         }

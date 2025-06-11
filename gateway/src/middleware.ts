@@ -17,16 +17,20 @@ export class AuthMiddleware implements NestMiddleware {
         this.JWT_HEADER = Buffer.from('{"alg":"RS256","typ":"JWT"}').toString('base64url');
 
         if (process.env.JWKS) {
-            fetch(process.env.JWKS).then(async e => {
-                if (e.status === 200) {
-                    const resp = (await e.json())[0];
-                    this.JWK_PUBLIC = createPublicKey(resp.raw);
-                }
-            });
+            try {
+                fetch(process.env.JWKS).then(async e => {
+                    if (e.status === 200) {
+                        const resp = (await e.json())[0];
+                        this.JWK_PUBLIC = createPublicKey(resp.raw);
+                        console.log('public key set!');
+                    }
+                });
+            } catch (e) {
+            }
         }
     }
 
-    private parseJWT(jwt: string): { [key: string]: string | number } {
+    private parseJWT(jwt: string): { [key: string]: any } {
         const parts = jwt.split('.');
 
         if (parts.length !== 3)
@@ -64,24 +68,35 @@ export class AuthMiddleware implements NestMiddleware {
 
         const url = req.originalUrl.split(/([#?])/)[0];
         if (url.startsWith('/api/') && !this.anonymousUrls.includes(url)) {
-
             if (!req.headers.authorization?.startsWith('Bearer '))
                 throw new BadRequestException({ error: 'Not authorized. Use Authorization: Bearer ...' });
 
             const token = req.headers.authorization.split(' ')[1];
 
-            this.service.verify(token).then(resp => {
-                const payload = resp.result?.payload;
-                if (!payload)
-                    return res.status(401).json({ error: resp.result?.error || 'unauthorized' }).end();
+            try {
+                const payload = this.parseJWT(token);
 
                 req.jwt = token;
                 req.sub = payload.sub;
                 req.role = payload.role;
+
                 next();
-            });
-        }
-        else
+            } catch (e) {
+                return res.status(401).json({ error: e?.message || 'unauthorized' }).end();
+            }
+
+
+            // this.service.verify(token).then(resp => {
+            //     const payload = resp.result?.payload;
+            //     if (!payload)
+            //         return res.status(401).json({ error: resp.result?.error || 'unauthorized' }).end();
+            //
+            //     req.jwt = token;
+            //     req.sub = payload.sub;
+            //     req.role = payload.role;
+            //     next();
+            // });
+        } else
             next();
     }
 }
