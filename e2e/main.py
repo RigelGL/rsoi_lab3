@@ -30,21 +30,17 @@ def setup_teardown():
         else:
             raise Exception(f"Service on port {port} didn't become healthy")
 
-    print('[success] no auth')
     res = requests.get('http://localhost:8080/api/v1/hotels?page=1&size=10')
     assert res.status_code == 400
 
-    print('[success] bad token')
     res = requests.get('http://localhost:8080/api/v1/hotels?page=1&size=10', headers={ 'Authorization': 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.a.b' })
     assert res.status_code == 401
 
-    print('[success] authorize')
     res = requests.post('http://localhost:8080/api/v1/authorize', data=dumps({ 'type': 'self', 'login': 'admin', 'password': '123456' }), headers=admin_headers)
     json = res.json()
     assert res.status_code == 200
     admin_headers['Authorization'] = 'Bearer ' + json['jwt']
 
-    print('[success] init mock')
     res = requests.post('http://localhost:8080/api/v1/test/prepare', headers=admin_headers)
     assert res.status_code == 200
 
@@ -341,7 +337,7 @@ def test_step3(setup_teardown):
     subprocess.run(['docker', 'compose', '-p', 'e2e', 'stop', 'loyalty'], check=True)
     time.sleep(5)
 
-def test_step3_Получить_информацию_о_статусе_в_программе_лояльности():
+def test_step3_Получить_информацию_о_статусе_в_программе_лояльности(setup_teardown):
     response = requests.get('http://localhost:8080/api/v1/loyalty', headers=admin_headers)
     assert response.status_code == 503
     assert 'application/json' in response.headers['Content-Type']
@@ -352,7 +348,7 @@ def test_step3_Отменить_бронирование(setup_teardown):
     response = requests.delete(f'http://localhost:8080/api/v1/reservations/{reservation_uid}', headers=admin_headers)
     assert response.status_code == 204
 
-def test_step4():
+def test_step4(setup_teardown):
     subprocess.run(['docker', 'compose', '-p', 'e2e', 'start', 'loyalty'], check=True)
     time.sleep(60)
 

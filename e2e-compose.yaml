@@ -50,6 +50,7 @@ services:
       PAYMENT_URL: http://payment:8060
       RESERVATION_URL: http://reservation:8070
       KAFKA: kafka:9092
+      JWKS: http://auth:8030/well-known
     depends_on:
       - logger
       - auth

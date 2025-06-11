@@ -17,16 +17,16 @@ if [ -z "$VIRTUAL_ENV" ]; then
 fi
 
 
-if [ -f "./e2e/requirements.txt" ]; then
-  echo "Installing requirements..."
-  pip3 install -r "./e2e/requirements.txt"
-  if [ $? -ne 0 ]; then
-    echo "Error!"
-    deactivate
-    exit 1
-  fi
-  echo "Requirements installed!"
-fi
+#if [ -f "./e2e/requirements.txt" ]; then
+#  echo "Installing requirements..."
+#  pip3 install -r "./e2e/requirements.txt"
+#  if [ $? -ne 0 ]; then
+#    echo "Error!"
+#    deactivate
+#    exit 1
+#  fi
+#  echo "Requirements installed!"
+#fi
 
 docker compose -p e2e down
 
