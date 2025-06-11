@@ -29,6 +29,7 @@ export class AppService implements OnModuleInit {
     private JWK_PUBLIC: KeyObject;
     private JWK_PUBLIC_MOD: string;
     private JWK_PUBLIC_EXP: string;
+    private JWK_PUBLIC_RAW: string;
 
     private JWT_HEADER: string;
 
@@ -54,6 +55,7 @@ export class AppService implements OnModuleInit {
             const jwk = this.JWK_PUBLIC.export({ format: 'jwk' });
             this.JWK_PUBLIC_MOD = jwk.n || '';
             this.JWK_PUBLIC_EXP = jwk.e || '';
+            this.JWK_PUBLIC_RAW = publicKeyPem || '';
 
             const privateKeyPem = fs.readFileSync(keyFolder + '/private_key.pem', 'utf-8');
             this.JWK_PRIVATE = createPrivateKey(privateKeyPem);
@@ -80,6 +82,7 @@ export class AppService implements OnModuleInit {
                 alg: 'RSA',
                 mod: this.JWK_PUBLIC_MOD,
                 exp: this.JWK_PUBLIC_EXP,
+                raw: this.JWK_PUBLIC_RAW,
                 kid: 'default'
             }
         ];

@@ -19,9 +19,8 @@ export class AuthMiddleware implements NestMiddleware {
         if (process.env.JWKS) {
             fetch(process.env.JWKS).then(async e => {
                 if (e.status === 200) {
-                    const resp = await e.json();
-                    console.log(resp);
-                    this.JWK_PUBLIC = createPublicKey(`-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA${resp.mod}${resp.exp}\n-----END PUBLIC KEY-----`);
+                    const resp = (await e.json())[0];
+                    this.JWK_PUBLIC = createPublicKey(resp.raw);
                 }
             });
         }
