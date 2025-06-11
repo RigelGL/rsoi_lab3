@@ -17,9 +17,9 @@ if [ -z "$VIRTUAL_ENV" ]; then
 fi
 
 
-if [ -f "./e2e.requirements.txt" ]; then
+if [ -f "./e2e/requirements.txt" ]; then
   echo "Installing requirements..."
-  pip3 install -r "./e2e.requirements.txt"
+  pip3 install -r "./e2e/requirements.txt"
   if [ $? -ne 0 ]; then
     echo "Error!"
     deactivate
@@ -30,8 +30,8 @@ fi
 
 docker compose -p e2e down
 
-echo "Run ./e2e.main.py..."
-python3 ./e2e.main.py
+echo "Run ./e2e/main.py..."
+python3 -m pytest -v ./e2e/main.py
 E2E_EXIT_CODE=$?
 echo "Deactivating..."
 deactivate

@@ -17,8 +17,8 @@ export class ReservationThirdService extends Healthy {
 
     async getHotels(page: number, limit: number, search: string): Promise<Pagination<HotelInfo>> {
         try {
-            page ||= 1;
-            limit ||= 20;
+            page = Math.max(1, +page);
+            limit = Math.max(10, Math.min(1000, +limit));
 
             const wrapper = await this.runWithProtect(
                 async () => fetch(`${this.url}/hotels?page=${page}&limit=${limit}&search=${search}`),);

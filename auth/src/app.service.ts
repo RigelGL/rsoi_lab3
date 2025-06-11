@@ -44,7 +44,7 @@ export class AppService implements OnModuleInit {
             this.google = { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET };
 
         this.OAUTH_REDIRECT = process.env.OAUTH_REDICRECT || 'http://localhost';
-        this.JWT_LIFETIME = Math.max(60, +(process.env.JWT_LIFETIME || 0));
+        this.JWT_LIFETIME = Math.max(3600, +(process.env.JWT_LIFETIME || 0));
 
         try {
             const keyFolder = process.env.KEYS_PATH || (__dirname + '/keys');
