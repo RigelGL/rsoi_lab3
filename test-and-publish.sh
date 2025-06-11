@@ -40,7 +40,7 @@ if [ "$all_tests_passed" = true ]; then
     for module in "${modules[@]}"; do
         printf "Publishing %s... " "$module"
         if cd "$module"; then
-            output=$(./test.sh 2>&1)
+            output=$(./publish.sh 2>&1)
             if [ $? -eq 0 ]; then
                 printf "ok\n"
             else
